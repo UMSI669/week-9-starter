@@ -1,0 +1,41 @@
+{
+  "_note": "SYNTHETIC interviews for the demo. Every person, organization, address, phone number, email and ID below is fictional. Phone numbers use the reserved 555-01xx range and emails use example.com.",
+  "interviews": [
+    {
+      "id": "clinic-scheduling",
+      "title": "Sample A: Clinic appointment booking",
+      "participantLabel": "P01 (synthetic)",
+      "segments": [
+        { "speaker": "Interviewer", "text": "Thanks for joining today. To start, could you tell me a little about yourself and how you usually book medical appointments?" },
+        { "speaker": "Participant", "text": "Sure. My name is Maria Delgado, I'm a nurse at Riverside Community Hospital, and I live in Ann Arbor with my two kids." },
+        { "speaker": "Participant", "text": "Honestly, I book almost everything by phone. I call the front desk at 734-555-0142 and just hope someone picks up before my shift starts." },
+        { "speaker": "Interviewer", "text": "What happens when nobody picks up?" },
+        { "speaker": "Participant", "text": "I leave a voicemail and then forget about it. Last month I missed a pediatric checkup for my son Leo because the callback came while I was in surgery prep." },
+        { "speaker": "Participant", "text": "The portal exists, but it asks for my patient ID, which is MRN 48213977, and I can never find the card." },
+        { "speaker": "Interviewer", "text": "If you could change one thing about booking, what would it be?" },
+        { "speaker": "Participant", "text": "Let me see open slots the way I see my work schedule. Doctor Patel's office sends reminders to maria.delgado@example.com, but only after I've already booked." },
+        { "speaker": "Participant", "text": "I don't need anything fancy. I just want to book in under a minute from the parking lot, without remembering a password." },
+        { "speaker": "Interviewer", "text": "That's really helpful. Thank you, that's everything for today." }
+      ]
+    },
+    {
+      "id": "transit-commute",
+      "title": "Sample B: Daily transit commute",
+      "participantLabel": "P02 (synthetic)",
+      "segments": [
+        { "speaker": "Interviewer", "text": "Can you walk me through a typical commute?" },
+        { "speaker": "Participant", "text": "I'm James Okafor. I take the number 4 bus from Packard Street to the Blake Transit Center, then walk to my job at Northwind Logistics." },
+        { "speaker": "Participant", "text": "The schedule app says the bus is three minutes away, and then it just disappears. I've been late twice this month, and my manager, Susan Reyes, noticed." },
+        { "speaker": "Interviewer", "text": "How do you decide when to leave home?" },
+        { "speaker": "Participant", "text": "I check the app, then I text my neighbor Priya at 313-555-0187 because she rides the same route and she's more reliable than the app." },
+        { "speaker": "Participant", "text": "On snowy days I give up and pay for a ride share, which is about fifteen dollars each way. That really adds up." },
+        { "speaker": "Interviewer", "text": "What would make you trust the arrival times again?" },
+        { "speaker": "Participant", "text": "If it told me when it was guessing. Like, this time is live, or this time is just the timetable. Then I could plan around it." },
+        { "speaker": "Participant", "text": "And a way to report a missing bus. I emailed feedback at james.okafor@example.com once and never heard anything back." },
+        { "speaker": "Interviewer", "text": "Great. Thanks so much for your time." }
+      ]
+    }
+  ],
+  "voices": { "Interviewer": "Samantha", "Participant": "Reed (English (US))" },
+  "participantVoiceOverrides": { "transit-commute": "Eddy (English (US))" }
+}

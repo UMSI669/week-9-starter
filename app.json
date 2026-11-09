@@ -1,0 +1,61 @@
+{
+  "expo": {
+    "name": "Interview Lens",
+    "slug": "interview-lens",
+    "scheme": "interviewlens",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "edu.umich.si669.interviewlens",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "Interview Lens records research interviews on this iPhone. Audio stays on the device.",
+        "NSSpeechRecognitionUsageDescription": "Interview Lens transcribes interviews with on-device speech recognition. Audio is not uploaded.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "edu.umich.si669.interviewlens",
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-status-bar",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Interview Lens records research interviews on this iPhone. Audio stays on the device.",
+          "enableBackgroundPlayback": false,
+          "enableBackgroundRecording": true
+        }
+      ],
+      "expo-asset",
+      "expo-sharing",
+      "expo-secure-store",
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "Interview Lens records research interviews on this iPhone. Audio stays on the device.",
+          "speechRecognitionPermission": "Interview Lens transcribes interviews with on-device speech recognition. Audio is not uploaded."
+        }
+      ],
+      "llama.rn"
+    ],
+    "experiments": {
+      "typedRoutes": false
+    }
+  }
+}

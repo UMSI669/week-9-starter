@@ -1,0 +1,163 @@
+{
+  "synthetic": true,
+  "interviews": [
+    {
+      "id": "clinic-scheduling",
+      "title": "Sample A: Clinic appointment booking",
+      "participantLabel": "P01 (synthetic)",
+      "audioFile": "clinic-scheduling.wav",
+      "durationMs": 80645,
+      "segments": [
+        {
+          "id": "seg_001",
+          "speaker": "Interviewer",
+          "startMs": 0,
+          "endMs": 6550,
+          "text": "Thanks for joining today. To start, could you tell me a little about yourself and how you usually book medical appointments?"
+        },
+        {
+          "id": "seg_002",
+          "speaker": "Participant",
+          "startMs": 7000,
+          "endMs": 15079,
+          "text": "Sure. My name is Maria Delgado, I'm a nurse at Riverside Community Hospital, and I live in Ann Arbor with my two kids."
+        },
+        {
+          "id": "seg_003",
+          "speaker": "Participant",
+          "startMs": 15529,
+          "endMs": 28696,
+          "text": "Honestly, I book almost everything by phone. I call the front desk at 734-555-0142 and just hope someone picks up before my shift starts."
+        },
+        {
+          "id": "seg_004",
+          "speaker": "Interviewer",
+          "startMs": 29146,
+          "endMs": 30867,
+          "text": "What happens when nobody picks up?"
+        },
+        {
+          "id": "seg_005",
+          "speaker": "Participant",
+          "startMs": 31317,
+          "endMs": 40804,
+          "text": "I leave a voicemail and then forget about it. Last month I missed a pediatric checkup for my son Leo because the callback came while I was in surgery prep."
+        },
+        {
+          "id": "seg_006",
+          "speaker": "Participant",
+          "startMs": 41254,
+          "endMs": 52484,
+          "text": "The portal exists, but it asks for my patient ID, which is MRN 48213977, and I can never find the card."
+        },
+        {
+          "id": "seg_007",
+          "speaker": "Interviewer",
+          "startMs": 52934,
+          "endMs": 55846,
+          "text": "If you could change one thing about booking, what would it be?"
+        },
+        {
+          "id": "seg_008",
+          "speaker": "Participant",
+          "startMs": 56296,
+          "endMs": 67926,
+          "text": "Let me see open slots the way I see my work schedule. Doctor Patel's office sends reminders to maria.delgado@example.com, but only after I've already booked."
+        },
+        {
+          "id": "seg_009",
+          "speaker": "Participant",
+          "startMs": 68376,
+          "endMs": 76263,
+          "text": "I don't need anything fancy. I just want to book in under a minute from the parking lot, without remembering a password."
+        },
+        {
+          "id": "seg_010",
+          "speaker": "Interviewer",
+          "startMs": 76713,
+          "endMs": 80195,
+          "text": "That's really helpful. Thank you, that's everything for today."
+        }
+      ]
+    },
+    {
+      "id": "transit-commute",
+      "title": "Sample B: Daily transit commute",
+      "participantLabel": "P02 (synthetic)",
+      "audioFile": "transit-commute.wav",
+      "durationMs": 67494,
+      "segments": [
+        {
+          "id": "seg_001",
+          "speaker": "Interviewer",
+          "startMs": 0,
+          "endMs": 2021,
+          "text": "Can you walk me through a typical commute?"
+        },
+        {
+          "id": "seg_002",
+          "speaker": "Participant",
+          "startMs": 2471,
+          "endMs": 11558,
+          "text": "I'm James Okafor. I take the number 4 bus from Packard Street to the Blake Transit Center, then walk to my job at Northwind Logistics."
+        },
+        {
+          "id": "seg_003",
+          "speaker": "Participant",
+          "startMs": 12008,
+          "endMs": 21607,
+          "text": "The schedule app says the bus is three minutes away, and then it just disappears. I've been late twice this month, and my manager, Susan Reyes, noticed."
+        },
+        {
+          "id": "seg_004",
+          "speaker": "Interviewer",
+          "startMs": 22057,
+          "endMs": 23993,
+          "text": "How do you decide when to leave home?"
+        },
+        {
+          "id": "seg_005",
+          "speaker": "Participant",
+          "startMs": 24443,
+          "endMs": 35946,
+          "text": "I check the app, then I text my neighbor Priya at 313-555-0187 because she rides the same route and she's more reliable than the app."
+        },
+        {
+          "id": "seg_006",
+          "speaker": "Participant",
+          "startMs": 36396,
+          "endMs": 43546,
+          "text": "On snowy days I give up and pay for a ride share, which is about fifteen dollars each way. That really adds up."
+        },
+        {
+          "id": "seg_007",
+          "speaker": "Interviewer",
+          "startMs": 43996,
+          "endMs": 46368,
+          "text": "What would make you trust the arrival times again?"
+        },
+        {
+          "id": "seg_008",
+          "speaker": "Participant",
+          "startMs": 46818,
+          "endMs": 55281,
+          "text": "If it told me when it was guessing. Like, this time is live, or this time is just the timetable. Then I could plan around it."
+        },
+        {
+          "id": "seg_009",
+          "speaker": "Participant",
+          "startMs": 55731,
+          "endMs": 64433,
+          "text": "And a way to report a missing bus. I emailed feedback at james.okafor@example.com once and never heard anything back."
+        },
+        {
+          "id": "seg_010",
+          "speaker": "Interviewer",
+          "startMs": 64883,
+          "endMs": 67044,
+          "text": "Great. Thanks so much for your time."
+        }
+      ]
+    }
+  ]
+}
