@@ -30,12 +30,9 @@ yarn-error.*
 .DS_Store
 *.pem
 
-# Ignore every .env file and variant
+# local env files
+.env*.local
 .env
-.env.*
-
-# Keep the example configuration tracked
-!.env.example
 
 # typescript
 *.tsbuildinfo
