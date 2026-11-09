@@ -1,0 +1,34 @@
+{
+  "expo": {
+    "name": "Dream Journal",
+    "slug": "dream-journal",
+    "scheme": "dream-journal",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.classroom.dreamjournal",
+      "infoPlist": {
+        "NSSpeechRecognitionUsageDescription": "Dream Journal turns your spoken dream into text.",
+        "NSMicrophoneUsageDescription": "Dream Journal listens while you describe your dream."
+      }
+    },
+    "android": {
+      "package": "com.classroom.dreamjournal",
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
+    },
+    "plugins": [
+      "expo-status-bar",
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "Dream Journal listens while you describe your dream.",
+          "speechRecognitionPermission": "Dream Journal turns your spoken dream into text."
+        }
+      ]
+    ]
+  }
+}
