@@ -67,14 +67,6 @@ test('check-off preserves order, undo preserves details, and renaming merges ato
   await repo.updateItem(apple.id, { ...blankDraft('Egg'), quantity: 3 });
   const merged = (await repo.snapshot()).items; assert.equal(merged.length, 1); assert.equal(merged[0].quantity, 4);
 });
-test('reorder stays within a complete category and cannot drop filtered-out rows', async () => {
-  const { repo } = await setup(); await repo.addOrMergeItems([blankDraft('A'), blankDraft('B'), { ...blankDraft('C'), category: 'Produce' }]);
-  const items = (await repo.snapshot()).items; const others = items.filter(item => item.category === 'Other');
-  await assert.rejects(repo.reorder('Other', [others[0].id]));
-  await assert.rejects(repo.reorder('Other', [others[0].id, items.find(item => item.category === 'Produce')!.id]));
-  await repo.reorder('Other', others.map(item => item.id).reverse());
-  assert.equal((await repo.snapshot()).items.find(item => item.id === others[1].id)?.position, 0);
-});
 test('undo after new item with the same name merges rather than failing uniqueness', async () => {
   const { repo } = await setup(); await repo.addOrMergeItems([blankDraft('Milk')]);
   const removed = await repo.remove((await repo.snapshot()).items[0].id);

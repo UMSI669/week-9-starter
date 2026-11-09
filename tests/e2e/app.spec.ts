@@ -1,5 +1,19 @@
 import { test, expect, type Page } from '@playwright/test';
 
+const endpointErrors = new WeakMap<Page, string[]>();
+test.beforeEach(({ page }) => {
+  const errors: string[] = [];
+  endpointErrors.set(page, errors);
+  page.on('console', message => {
+    const text = message.text();
+    if (text.includes('Error encountered handling the endpoint')) errors.push(text);
+  });
+  page.on('pageerror', error => errors.push(error.message));
+});
+test.afterEach(({ page }) => {
+  expect(endpointErrors.get(page), 'Browser runtime and RTK Query must not raise unexpected errors').toEqual([]);
+});
+
 const groceryItems = [
   { name: 'apple', quantity: 1, unit: '', category: 'Produce', emoji: '🍎', quantityInferred: true },
   { name: 'egg', quantity: 1, unit: '', category: 'Dairy', emoji: '🥚', quantityInferred: true },
@@ -24,13 +38,20 @@ async function record(page: Page) {
   await page.getByRole('button', { name: 'Stop and make my list' }).click();
 }
 async function mockParser(page: Page, fail = false) {
-  await page.route('https://api.toolkit.umgpt.umich.edu/v1/responses', async route => {
+  await page.route('**/api/format', async route => {
     const body = route.request().postDataJSON();
-    expect(body.text.format.strict).toBe(true);
+    expect(typeof body.transcript).toBe('string');
+    expect(route.request().headers().authorization).toBeUndefined();
     await route.fulfill({ status: fail ? 503 : 200, contentType: 'application/json', body: JSON.stringify(fail ? { error: { message: 'Service unavailable' } } :
-      { status: 'completed', output: [{ type: 'message', content: [{ type: 'output_text', text: JSON.stringify({ items: groceryItems }) }] }] }) });
+      { items: groceryItems }) });
   });
 }
+
+test('web formatting API is served by Expo and rejects invalid transcripts before calling Toolkit', async ({ request }) => {
+  const response = await request.post('/api/format', { data: { transcript: '' } });
+  expect(response.status()).toBe(400);
+  expect(await response.json()).toEqual({ error: { message: 'The transcript is empty.' } });
+});
 
 test('manual list supports merge, check-off, view persistence, editing, and delete undo', async ({ page }) => {
   await home(page); await quickAdd(page, 'Milk');
@@ -158,14 +179,20 @@ test('denied microphone permission shows an actionable error', async ({ page }) 
   await expect(page.getByRole('button', { name: 'Stop and make my list' })).toHaveCount(0);
 });
 
-test('web dragging saves order within a category and filtering keeps other items', async ({ page }) => {
+test('checkbox updates preserve list order and filtering keeps other items', async ({ page }) => {
   await home(page); await quickAdd(page, 'Apple'); await quickAdd(page, 'Banana');
   const apple = page.getByRole('button', { name: 'Edit Apple', exact: true });
   const banana = page.getByRole('button', { name: 'Edit Banana', exact: true });
-  await banana.dragTo(apple);
-  await expect(page.getByRole('button', { name: /^Edit (Apple|Banana)$/ }).first()).toHaveAttribute('aria-label', 'Edit Banana');
+  const checkbox = page.getByRole('checkbox', { name: 'Check Apple', exact: true });
+  for (const checked of [true, false, true]) {
+    await checkbox.click();
+    await expect(checkbox).toHaveAttribute('aria-checked', String(checked));
+    await expect(page.getByRole('button', { name: /^Edit (Apple|Banana)$/ }).first()).toHaveAttribute('aria-label', 'Edit Apple');
+    await expect(banana).toBeVisible();
+  }
   await page.reload();
-  await expect(page.getByRole('button', { name: /^Edit (Apple|Banana)$/ }).first()).toHaveAttribute('aria-label', 'Edit Banana');
+  await expect(checkbox).toHaveAttribute('aria-checked', 'true');
+  await expect(page.getByRole('button', { name: /^Edit (Apple|Banana)$/ }).first()).toHaveAttribute('aria-label', 'Edit Apple');
   await page.getByRole('textbox', { name: 'Search groceries' }).fill('Apple');
   await expect(apple).toBeVisible(); await expect(banana).toHaveCount(0);
   await page.getByRole('textbox', { name: 'Search groceries' }).clear();

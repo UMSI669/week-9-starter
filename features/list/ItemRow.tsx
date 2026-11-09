@@ -11,8 +11,8 @@ import { notice } from '../../store/uiSlice';
 import { safeError } from '../../services/apiErrors';
 import { IconButton } from '../common/ui';
 
-export default function ItemRow({ item, drag, active = false, grid = false, readOnly = false }: {
-  item: GroceryItem; drag?: () => void; active?: boolean; grid?: boolean; readOnly?: boolean;
+export default function ItemRow({ item, grid = false, readOnly = false }: {
+  item: GroceryItem; grid?: boolean; readOnly?: boolean;
 }) {
   const [toggle, toggleState] = useToggleMutation(); const [remove, removeState] = useRemoveMutation(); const dispatch = useAppDispatch();
   const onToggle = async () => {
@@ -23,7 +23,7 @@ export default function ItemRow({ item, drag, active = false, grid = false, read
     try { const removed = await remove(item.id).unwrap(); dispatch(notice({ text: `${item.name} removed`, undo: removed })); }
     catch (error) { dispatch(notice({ text: safeError(error) })); }
   };
-  const content = <View style={{ backgroundColor: active ? colors.peach : colors.white, borderWidth: 1, borderColor: colors.line,
+  const content = <View style={{ backgroundColor: colors.white, borderWidth: 1, borderColor: colors.line,
     borderRadius: 17, padding: grid ? 14 : 12, flexDirection: grid ? 'column' : 'row', alignItems: grid ? 'stretch' : 'center', gap: 10, marginBottom: 8 }}>
     <View style={{ width: grid ? '100%' : 46, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
       <View style={{ width: 43, height: 43, borderRadius: 13, backgroundColor: item.checked ? '#F3F4F0' : colors.peach, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 23 }}>{item.emoji}</Text></View>
@@ -42,7 +42,6 @@ export default function ItemRow({ item, drag, active = false, grid = false, read
       <Ionicons name={item.checked ? 'checkbox' : 'square-outline'} size={26} color={item.checked ? colors.green : colors.muted} />
     </Pressable>}
     {readOnly && <Ionicons name={item.checked ? 'checkmark-circle' : 'ellipse-outline'} size={24} color={item.checked ? colors.green : colors.muted} />}
-    {!grid && drag && <Pressable accessibilityRole="button" accessibilityLabel={`Reorder ${item.name}; hold and drag within its category`} onLongPress={drag} delayLongPress={180} disabled={active} style={{ minWidth: 32, minHeight: 44, alignItems: 'center', justifyContent: 'center' }}><Ionicons name="reorder-two" size={24} color={colors.muted} /></Pressable>}
     {grid && !readOnly && <View style={styles.between}><Text style={styles.small}>Swipe to remove</Text><IconButton name="trash-outline" label={`Delete ${item.name}`} color={colors.red} onPress={onRemove} disabled={removeState.isLoading} /></View>}
   </View>;
   if (readOnly) return content;

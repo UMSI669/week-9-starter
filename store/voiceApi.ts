@@ -1,5 +1,6 @@
 import { createApi, fakeBaseQuery } from '@reduxjs/toolkit/query/react';
-import { parseGroceries } from '../services/umgpt/parser';
+import { Platform } from 'react-native';
+import { parseGroceries, parseGroceriesOnWeb } from '../services/umgpt/parser';
 import { transcribeAudio } from '../services/openrouter/transcribe';
 import { safeError } from '../services/apiErrors';
 import type { GroceryDraft } from '../utils/groceries';
@@ -19,7 +20,7 @@ export const voiceApi = createApi({
       async queryFn(transcript, api) {
         const timeout = new AbortController(); const timer = setTimeout(() => timeout.abort(), 60_000);
         const abort = () => timeout.abort(); api.signal.addEventListener('abort', abort);
-        try { return { data: await parseGroceries(transcript, process.env.EXPO_PUBLIC_UMGPT_API_KEY?.trim() || '', process.env.EXPO_PUBLIC_PARSER_MODEL?.trim() || 'gpt-6-luna', timeout.signal, fetch, process.env.EXPO_PUBLIC_UMGPT_BASE_URL?.trim() || 'https://api.toolkit.umgpt.umich.edu/v1') }; }
+        try { return { data: Platform.OS === 'web' ? await parseGroceriesOnWeb(transcript, timeout.signal) : await parseGroceries(transcript, process.env.EXPO_PUBLIC_UMGPT_API_KEY?.trim() || '', process.env.EXPO_PUBLIC_PARSER_MODEL?.trim() || 'gpt-6-luna', timeout.signal, fetch, process.env.EXPO_PUBLIC_UMGPT_BASE_URL?.trim() || 'https://api.toolkit.umgpt.umich.edu/v1') }; }
         catch (error) { return { error: { message: timeout.signal.aborted ? 'Item formatting stopped or timed out.' : safeError(error) } }; }
         finally { clearTimeout(timer); api.signal.removeEventListener('abort', abort); }
       },

@@ -4,20 +4,18 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { CATEGORIES, CATEGORY_EMOJI, blankDraft, type GroceryItem } from '../../utils/groceries';
 import { weekLabel } from '../../utils/week';
-import { useAddMutation, useReorderMutation, useSettingMutation, useSnapshotQuery } from '../../store/listApi';
+import { useAddMutation, useSettingMutation, useSnapshotQuery } from '../../store/listApi';
 import { useAppDispatch } from '../../store';
 import { notice } from '../../store/uiSlice';
 import { safeError } from '../../services/apiErrors';
 import { colors, styles } from '../../theme';
 import { BrandHeader, Button, EmptyState, ErrorState, IconButton, Screen } from '../common/ui';
 import ItemRow from './ItemRow';
-import SortableList from './SortableList';
-import ListScrollContainer from './ListScrollContainer';
 
 export default function ListScreen({ grouped = false }: { grouped?: boolean }) {
   const { data, error, isLoading, refetch } = useSnapshotQuery();
   const [search, setSearch] = useState(''); const [category, setCategory] = useState('All'); const [quickName, setQuickName] = useState('');
-  const [add, addState] = useAddMutation(); const [reorder] = useReorderMutation(); const [setting] = useSettingMutation(); const dispatch = useAppDispatch();
+  const [add, addState] = useAddMutation(); const [setting] = useSettingMutation(); const dispatch = useAppDispatch();
   const items = data?.items || [];
   const done = items.filter(item => item.checked).length;
   const visible = items.filter(item => (category === 'All' || item.category === category) && item.name.toLowerCase().includes(search.trim().toLowerCase()))
@@ -28,18 +26,10 @@ export default function ListScreen({ grouped = false }: { grouped?: boolean }) {
     try { const result = await add({ items: [blankDraft(quickName)] }).unwrap(); setQuickName(''); dispatch(notice({ text: result.merged[0] || 'Added to this week' })); }
     catch (err) { dispatch(notice({ text: safeError(err) })); }
   };
-  const onReorder = async (ordered: GroceryItem[], from: number, to: number, original: GroceryItem[]) => {
-    if (original[from]?.category !== original[to]?.category && from !== to) {
-      dispatch(notice({ text: 'Move items within the same category.' })); return;
-    }
-    const moved = ordered[to]; if (!moved) return;
-    try { await reorder({ category: moved.category, ids: ordered.filter(item => item.category === moved.category).map(item => item.id) }).unwrap(); }
-    catch (err) { dispatch(notice({ text: safeError(err) })); }
-  };
-  const renderList = (list: GroceryItem[]) => <SortableList items={list} disabled={Boolean(search.trim())} onReorder={(ordered, from, to) => void onReorder(ordered, from, to, list)} />;
+  const renderList = (list: GroceryItem[]) => <View>{list.map(item => <ItemRow key={item.id} item={item} />)}</View>;
 
   return <Screen scroll={false}>
-    <ListScrollContainer keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
+    <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
       <BrandHeader right={<IconButton name="time-outline" label="Week history" onPress={() => router.push('/history')} />} />
       <View style={{ gap: 8 }}><Text style={styles.eyebrow}>{grouped ? 'EVERYTHING IN ITS PLACE' : 'A LITTLE LESS TO REMEMBER'}</Text><Text style={styles.title}>{grouped ? 'Your shopping list' : 'This week’s pantry'}</Text><Text style={styles.subtitle}>{data ? weekLabel(data.weekId) : 'Your Sunday-to-Saturday shopping list'}</Text></View>
       <View style={[styles.card, { backgroundColor: colors.navy, borderColor: colors.navy, gap: 14 }]}>
@@ -59,9 +49,9 @@ export default function ListScreen({ grouped = false }: { grouped?: boolean }) {
       {isLoading ? <ActivityIndicator size="large" color={colors.orange} /> : error ? <ErrorState message={safeError(error)} retry={() => void refetch()} /> : visible.length === 0 ? <EmptyState title={items.length ? 'No matching groceries' : 'A fresh list for a fresh week'} message={items.length ? 'Try a different search or category.' : 'Add your first item below, or tap the mic and say what you need.'} /> : grouped ?
         CATEGORIES.filter(cat => visible.some(item => item.category === cat)).map(cat => <View key={cat} style={{ gap: 12 }}><View style={styles.between}><Text style={{ fontSize: 16, fontWeight: '700', color: colors.navy }}>{CATEGORY_EMOJI[cat]}  {cat}</Text><Text style={styles.small}>{visible.filter(item => item.category === cat && item.checked).length}/{visible.filter(item => item.category === cat).length} done</Text></View>{renderList(visible.filter(item => item.category === cat))}</View>) :
         data?.view === 'grid' ? <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>{visible.map(item => <View key={item.id} style={{ width: '48%', flexGrow: 1, maxWidth: '50%' }}><ItemRow item={item} grid /></View>)}</View> : renderList(visible)}
-      {visible.length > 1 && (grouped || data?.view === 'list') && !search.trim() && <Text style={[styles.small, { textAlign: 'center' }]}>Hold the handle to reorder within a category. Swipe left to delete.</Text>}
+      {visible.length > 1 && (grouped || data?.view === 'list') && !search.trim() && <Text style={[styles.small, { textAlign: 'center' }]}>Swipe left to delete.</Text>}
       <Button title="Add an item with details" secondary icon="add-outline" onPress={() => router.push('/item')} />
-    </ListScrollContainer>
+    </ScrollView>
     <View style={{ borderTopWidth: 1, borderColor: colors.line, backgroundColor: colors.cream, paddingHorizontal: 18, paddingVertical: 12 }}><View style={[styles.row, { maxWidth: 738, width: '100%', alignSelf: 'center', gap: 8 }]}>
       <TextInput accessibilityLabel="Quick-add item name" placeholder="Add a quick item…" placeholderTextColor={colors.muted} value={quickName} onChangeText={setQuickName} onSubmitEditing={quickAdd} returnKeyType="done" maxLength={120} style={[styles.input, { flex: 1 }]} />
       <Button title="Add" onPress={quickAdd} disabled={!quickName.trim() || !data} busy={addState.isLoading} />

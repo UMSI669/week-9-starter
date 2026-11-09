@@ -36,3 +36,16 @@ node scripts/check-whisper.mjs /tmp/grocery-list.wav
 
 See [the Whisper check guide](whisper-check.md) for key/account errors. Live
 checks make provider requests; the automated unit and browser tests use mocks.
+
+## Web formatting check
+
+Toolkit's `/responses` endpoint rejects browser OPTIONS preflights with HTTP 401
+and omits the allowed headers/methods. Web formatting now uses the same-origin
+Expo `/api/format` route, which supplies the Toolkit key server-side and validates
+the JSON response. Native formatting continues calling Toolkit directly.
+
+The live handler returned the four expected grocery items in 2.1 seconds. A
+separate live POST to the running Expo web endpoint also returned HTTP 200 with
+apple, egg, two gallons of milk, and one loaf of bread. The web export includes
+the API route and requires a server-capable Expo host. Web screens load eagerly
+and mount after hydration so manual lists continue working offline.

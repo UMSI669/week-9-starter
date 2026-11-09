@@ -8,6 +8,10 @@ async function call<T>(operation: (repo: Awaited<ReturnType<typeof getRepository
   try { return { data: await operation(await getRepository()) }; }
   catch (error) { return { error: { message: safeError(error) } }; }
 }
+function callVoid(operation: (repo: Awaited<ReturnType<typeof getRepository>>) => Promise<void>) {
+  // RTK Query requires defined data even when a database write has no result.
+  return call(async repo => { await operation(repo); return null; });
+}
 export const listApi = createApi({
   reducerPath: 'listApi', baseQuery: fakeBaseQuery<ApiError>(), tagTypes: ['Lists'],
   endpoints: builder => ({
@@ -17,14 +21,13 @@ export const listApi = createApi({
     recent: builder.query<GroceryItem[], void>({ queryFn: () => call(repo => repo.recent()), providesTags: ['Lists'] }),
     add: builder.mutation<MergeResult, { items: GroceryDraft[]; source?: 'manual' | 'voice' }>({ queryFn: arg => call(repo => repo.addOrMergeItems(arg.items, arg.source)), invalidatesTags: ['Lists'] }),
     update: builder.mutation<MergeResult, { id: string; item: GroceryDraft }>({ queryFn: arg => call(repo => repo.updateItem(arg.id, arg.item)), invalidatesTags: ['Lists'] }),
-    toggle: builder.mutation<void, string>({ queryFn: id => call(repo => repo.toggle(id)), invalidatesTags: ['Lists'] }),
+    toggle: builder.mutation<null, string>({ queryFn: id => callVoid(repo => repo.toggle(id)), invalidatesTags: ['Lists'] }),
     remove: builder.mutation<GroceryItem, string>({ queryFn: id => call(repo => repo.remove(id)), invalidatesTags: ['Lists'] }),
-    restore: builder.mutation<void, GroceryItem>({ queryFn: item => call(repo => repo.restore(item)), invalidatesTags: ['Lists'] }),
-    reorder: builder.mutation<void, { category: string; ids: string[] }>({ queryFn: arg => call(repo => repo.reorder(arg.category, arg.ids)), invalidatesTags: ['Lists'] }),
-    setting: builder.mutation<void, { key: string; value: string }>({ queryFn: arg => call(repo => repo.setSetting(arg.key, arg.value)), invalidatesTags: ['Lists'] }),
+    restore: builder.mutation<null, GroceryItem>({ queryFn: item => callVoid(repo => repo.restore(item)), invalidatesTags: ['Lists'] }),
+    setting: builder.mutation<null, { key: string; value: string }>({ queryFn: arg => callVoid(repo => repo.setSetting(arg.key, arg.value)), invalidatesTags: ['Lists'] }),
     copy: builder.mutation<MergeResult, string>({ queryFn: id => call(repo => repo.copyUnchecked(id)), invalidatesTags: ['Lists'] }),
-    clear: builder.mutation<void, void>({ queryFn: () => call(repo => repo.clear()), invalidatesTags: ['Lists'] }),
+    clear: builder.mutation<null, void>({ queryFn: () => callVoid(repo => repo.clear()), invalidatesTags: ['Lists'] }),
   }),
 });
 export const { useSnapshotQuery, useHistoryQuery, useWeekItemsQuery, useRecentQuery, useAddMutation, useUpdateMutation,
-  useToggleMutation, useRemoveMutation, useRestoreMutation, useReorderMutation, useSettingMutation, useCopyMutation, useClearMutation } = listApi;
+  useToggleMutation, useRemoveMutation, useRestoreMutation, useSettingMutation, useCopyMutation, useClearMutation } = listApi;

@@ -135,16 +135,6 @@ export class GroceryRepository {
         Number(item.quantityInferred), item.checked, item.position, item.source, item.carried_over, item.created_at, item.updated_at);
     }));
   }
-  reorder(category: string, ids: string[]) {
-    return this.exclusive(() => this.transaction(async () => {
-      const weekId = await this.currentWeek();
-      const actual = await this.db.getAllAsync<{ id: string }>('SELECT id FROM items WHERE week_id = ? AND category = ?', weekId, category);
-      if (new Set(ids).size !== ids.length || ids.length !== actual.length || actual.some(item => !ids.includes(item.id))) {
-        throw new Error('The list changed. Please try reordering again.');
-      }
-      for (let index = 0; index < ids.length; index++) await this.db.runAsync('UPDATE items SET position = ? WHERE id = ?', index, ids[index]);
-    }));
-  }
   setSetting(key: string, value: string) {
     return this.exclusive(async () => { await this.db.runAsync('INSERT INTO settings(key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value', key, value); });
   }

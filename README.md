@@ -12,8 +12,13 @@ npm start
 ```
 
 Open the app in an Expo Go version matching **SDK 58**, or use a development build.
-For the browser, run `npm run web`. SQLite on web requires the cross-origin
-headers configured in `metro.config.js`; when hosting a web export, set
+For the browser, run `npm run web`. Web formatting calls the same-origin
+`/api/format` route, which authenticates with U-M GPT Toolkit from the server.
+Toolkit rejects browser preflights, so direct browser formatting requests fail.
+The web export uses Expo's `server` output and needs a host that runs its API
+routes; serving only static files will not enable web formatting.
+SQLite on web requires the cross-origin headers configured in `metro.config.js`;
+when hosting a web export, set
 `Cross-Origin-Opener-Policy: same-origin` and
 `Cross-Origin-Embedder-Policy: credentialless` on the host too.
 
@@ -59,6 +64,10 @@ transcript into strict-schema grocery JSON using the gateway's Responses API.
 Both integrations were verified with the supplied grocery recording/transcript.
 Restart Expo after changing `.env`.
 
+The web API route uses `UMGPT_API_KEY` on the server when set, otherwise it uses
+the existing `EXPO_PUBLIC_UMGPT_API_KEY`. Set that server environment variable
+when deploying the web server. Android continues using its public Toolkit key.
+
 As agreed in the prototype plan, public Expo environment variables embed the
 keys in the app. Keep `.env` out of Git. A production app needs a backend for
 provider credentials.
@@ -67,8 +76,8 @@ provider credentials.
 
 - **Home:** search/filter items, toggle list/grid, add a quick item, check it off,
   or open it to edit details.
-- **Lists:** see category groups and completion counts. Hold a row's handle to
-  drag within its category on mobile; drag a row on web. Searching disables drag.
+- **Lists:** see category groups and completion counts. Items keep their order
+  when checked off; manual reordering is disabled.
 - **Delete:** swipe left, then tap Delete. Grid cards also have a delete button.
   The toast offers Undo for seven seconds.
 - **Speak:** record up to 60 seconds; the app warns at 50 seconds. Stop to
@@ -81,6 +90,8 @@ Identical normalized names and units merge by adding quantities. Weeks start
 on Sunday in the device timezone. Unchecked items carry over once when a new
 week is opened or the app returns to the foreground. A timer also checks for
 rollover while the app stays open. Manual lists work offline.
+
+On mobile, lists use a standard scroll view with swipe-to-delete rows.
 
 If transcription fails, the recording remains available for retry. If formatting
 fails, editable recovered items are shown with an explicit review notice. Leaving
@@ -106,7 +117,7 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-Playwright starts or reuses the Expo web server. It uses a fake microphone and
+Playwright starts an isolated Expo web server on port 8091. It uses a fake microphone and
 mock provider replies, so browser tests do not spend API credits.
 
 For live API checks (each makes one provider request):

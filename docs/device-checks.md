@@ -14,7 +14,7 @@ Use a phone with Expo Go matching SDK 58, or install an EAS development/preview 
 | Edit transcript | Re-parse updates items without uploading audio again | Pending |
 | Duplicate name and unit | Quantities add; the merge toast explains the new total | Pending |
 | Same name, different units | Items remain separate | Pending |
-| Drag and swipe | Drag only within category; swipe Delete offers Undo | Pending |
+| Scroll and swipe | Checking items preserves order and scrolling; swipe Delete offers Undo | Pending |
 | Restart the app | Items, checkmarks, order, and list/grid preference persist | Pending |
 | Change clock to next Sunday | Unchecked items carry over once; past week stays read-only | Pending |
 | Reopen/foreground repeatedly | No duplicate carry-over items | Pending |

@@ -50,3 +50,18 @@ export async function parseGroceries(transcript: string, apiKey: string, model: 
   }
   return readParserResponse(body);
 }
+
+export async function parseGroceriesOnWeb(transcript: string, signal?: AbortSignal, fetcher: typeof fetch = fetch) {
+  // Toolkit rejects browser preflights. Call our same-origin server route,
+  // which supplies the Toolkit credentials and validates its model response.
+  parserRequest(transcript, ''); // Apply the same transcript limits before sending.
+  const response = await fetcher('/api/format', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ transcript }), signal,
+  });
+  const body = await response.json().catch(() => null);
+  if (!response.ok) {
+    throw new Error(typeof body?.error?.message === 'string' ? body.error.message : `Item formatting failed (HTTP ${response.status}). Please retry.`);
+  }
+  return validateGroceries(body);
+}

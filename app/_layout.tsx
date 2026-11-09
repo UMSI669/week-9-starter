@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { AppState, Text, View } from 'react-native';
+import { useEffect, useSyncExternalStore } from 'react';
+import { ActivityIndicator, AppState, Platform, Text, View } from 'react-native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -10,6 +10,8 @@ import { listApi, useSnapshotQuery } from '../store/listApi';
 import { getWeekId } from '../utils/week';
 import { colors, styles } from '../theme';
 import ToastHost from '../features/common/ToastHost';
+
+const subscribeToHydration = () => () => {};
 
 function Lifecycle() {
   useSnapshotQuery();
@@ -23,6 +25,12 @@ function Lifecycle() {
   return null;
 }
 export default function RootLayout() {
+  const mounted = useSyncExternalStore(subscribeToHydration, () => true, () => false);
+  // Grocery data and icon fonts initialize in the browser. Hydrate a stable
+  // loading shell, then mount the local app without server/client font mismatches.
+  if (Platform.OS === 'web' && !mounted) {
+    return <View style={[styles.screen, { alignItems: 'center', justifyContent: 'center' }]}><ActivityIndicator color={colors.orange} /></View>;
+  }
   return <GestureHandlerRootView style={{ flex: 1 }}><SafeAreaProvider><Provider store={store}>
     <Lifecycle /><StatusBar style="dark" />
     <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.cream } }}>
