@@ -1,0 +1,9 @@
+{
+  "expo": {
+    "name": "Voice Idea Lab",
+    "slug": "voice-idea-lab",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light"
+  }
+}
