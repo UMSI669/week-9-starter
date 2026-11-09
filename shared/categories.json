@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "note": "Single source of truth for Dream Decoder primary categories. Imported by the Expo app (src/data/categories.js) and read by the backend (server/src/categories.js) so the app and the AI validator can never drift apart.",
+  "categories": [
+    { "key": "adventure", "label": "Adventure", "emoji": "🧭", "blurb": "Quests, journeys, and places you have never been." },
+    { "key": "relationships", "label": "Relationships", "emoji": "🫂", "blurb": "Family, friends, partners, strangers who felt familiar." },
+    { "key": "school-work", "label": "School & Work", "emoji": "🎓", "blurb": "Classrooms, exams, offices, deadlines, performance." },
+    { "key": "nature-animals", "label": "Nature & Animals", "emoji": "🦋", "blurb": "Weather, water, forests, and creatures of every kind." },
+    { "key": "flying-falling", "label": "Flying & Falling", "emoji": "🪶", "blurb": "Lift, weightlessness, drops, and the loss of footing." },
+    { "key": "mystery", "label": "Mystery", "emoji": "🔮", "blurb": "Riddles, strangeness, symbols you cannot quite place." },
+    { "key": "everyday-life", "label": "Everyday Life", "emoji": "☕", "blurb": "Ordinary rooms and routines, slightly rearranged." },
+    { "key": "other", "label": "Other", "emoji": "✨", "blurb": "Dreams that do not settle into one obvious theme." }
+  ]
+}
