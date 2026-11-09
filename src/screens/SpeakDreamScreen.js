@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { DictationStatus, useDreamDictation } from '../hooks/useDreamDictation';
+import CategoryPicker from '../components/CategoryPicker';
 
 const colors = {
   background: '#F5F3FB',
@@ -51,9 +52,9 @@ const MIC_LABELS = {
  *
  * Props:
  *   onSave(entry) – called when the user saves. `entry` is
- *     { text: string, createdAt: ISO date string }.
+ *     { text: string, category: string, createdAt: ISO date string }.
  *     It may return a Promise. If it throws, the draft is kept and the error
- *     is shown. Task #2/#3 connect this to storage.
+ *     is shown.
  */
 export default function SpeakDreamScreen({ onSave }) {
   const dictation = useDreamDictation();
@@ -61,6 +62,7 @@ export default function SpeakDreamScreen({ onSave }) {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
   const [savedMessage, setSavedMessage] = useState(null);
+  const [category, setCategory] = useState('Uncategorized');
   const [confirmClear, setConfirmClear] = useState(false);
   const clearTimer = useRef(null);
 
@@ -103,8 +105,9 @@ export default function SpeakDreamScreen({ onSave }) {
     setSaving(true);
     setSaveError(null);
     try {
-      await onSave?.({ text, createdAt: new Date().toISOString() });
+      await onSave?.({ text, category, createdAt: new Date().toISOString() });
       dictation.reset();
+      setCategory('Uncategorized');
       setSavedMessage('Dream saved.');
     } catch (caught) {
       setSaveError(caught?.message || 'Could not save this dream. Your text is still here, so try again.');
@@ -211,6 +214,11 @@ export default function SpeakDreamScreen({ onSave }) {
             {dictation.isBusy ? (
               <Text style={styles.hint}>You can edit the text once listening stops.</Text>
             ) : null}
+          </View>
+
+          <View style={styles.card}>
+            <Text style={styles.fieldLabel}>Category</Text>
+            <CategoryPicker value={category} onChange={setCategory} />
           </View>
 
           {saveError ? (
