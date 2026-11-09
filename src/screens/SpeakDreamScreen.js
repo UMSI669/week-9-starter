@@ -228,6 +228,7 @@ export default function SpeakDreamScreen({ onSave }) {
           ) : null}
 
           <View style={styles.actions}>
+            <Text style={styles.hint}>After saving, your dream text is sent to OpenRouter for an AI interpretation.</Text>
             <Pressable
               accessibilityRole="button"
               accessibilityState={{ disabled: !canSave }}

@@ -60,15 +60,27 @@ export function useDreamJournal() {
       text,
       createdAt: entry.createdAt || new Date().toISOString(),
       category: DREAM_CATEGORIES.includes(entry.category) ? entry.category : 'Uncategorized',
+      interpretation: null,
     };
-    return changeDreams((current) => [dream, ...current]);
+    return changeDreams((current) => [dream, ...current]).then(() => dream);
   }, [changeDreams]);
 
   const updateDream = useCallback((id, changes) => changeDreams((current) => {
     const text = changes.text?.trim();
     if (!text) throw new Error('A dream cannot be empty.');
     if (!DREAM_CATEGORIES.includes(changes.category)) throw new Error('Choose a valid category.');
-    return current.map((dream) => dream.id === id ? { ...dream, text, category: changes.category } : dream);
+    return current.map((dream) => dream.id === id ? {
+      ...dream,
+      text,
+      category: changes.category,
+      interpretation: text === dream.text ? dream.interpretation : null,
+    } : dream);
+  }), [changeDreams]);
+
+  const saveInterpretation = useCallback((id, text, interpretation) => changeDreams((current) => {
+    const dream = current.find((entry) => entry.id === id);
+    if (!dream || dream.text !== text) throw new Error('This dream changed. Save it and try again.');
+    return current.map((entry) => entry.id === id ? { ...entry, interpretation } : entry);
   }), [changeDreams]);
 
   const deleteDream = useCallback((id) => changeDreams((current) => {
@@ -76,5 +88,5 @@ export function useDreamJournal() {
     return current.filter((dream) => dream.id !== id);
   }), [changeDreams]);
 
-  return { dreams, loading, error, addDream, updateDream, deleteDream };
+  return { dreams, loading, error, addDream, updateDream, saveInterpretation, deleteDream };
 }

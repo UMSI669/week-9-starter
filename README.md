@@ -1,8 +1,20 @@
 # Dream Journal
 
-Dream Journal lets you speak a dream, review and correct the transcription, choose a category, and save it. The Journal screen lists saved dreams, supports text search and category filtering, and lets you open an entry to edit its text or category or delete it with confirmation.
+Dream Journal lets you speak a dream, review and correct the transcription, choose a category, and save it. The Journal screen lists saved dreams, supports text search and category filtering, and lets you open an entry to edit its text or category or delete it with confirmation. After saving, OpenRouter generates a short AI interpretation that appears on the dream detail screen.
 
-Dreams are stored locally with AsyncStorage, so they remain after closing and reopening the app or browser. Browser entries stay in that browser's local storage. They are not synced between devices or backed up by this app. No account, cloud AI service, or API key is required.
+Dreams and completed interpretations are stored locally with AsyncStorage, so they remain after closing and reopening the app or browser. Browser entries stay in that browser's local storage. They are not synced between devices or backed up by this app. Dream text is sent to OpenRouter for interpretation after saving.
+
+## OpenRouter key
+
+Copy [`.env.example`](.env.example) to a new `.env` file in this app's root folder. Replace the placeholder with your own key:
+
+```dotenv
+EXPO_PUBLIC_OPENROUTER_API_KEY=your-key-here
+```
+
+Restart the Expo server after changing `.env`. The default model is `openai/gpt-4o-mini`; set `EXPO_PUBLIC_OPENROUTER_MODEL` in `.env` to use another OpenRouter chat model. A dream still saves if the request fails, and its detail screen offers a retry button.
+
+`EXPO_PUBLIC_` values are included in the browser/app bundle. This setup is for the class prototype; a deployed app should keep the key on a backend. Do not commit `.env` or paste your real key into source code.
 
 ## Run the app
 
@@ -18,7 +30,7 @@ For web voice input, use a browser with Web Speech API support and allow microph
 ## Try it
 
 1. On **Speak**, record a dream or type one. Edit the text and pick a category.
-2. Tap **Save dream**. The app opens **Journal** with the saved entry.
+2. Tap **Save dream**. The app opens the saved entry and shows its AI interpretation when the request finishes.
 3. Search for a word, filter by category, and tap an entry to read, edit, or delete it.
 4. Close and reopen the app to confirm the saved entry is still in Journal.
 
@@ -26,5 +38,6 @@ For web voice input, use a browser with Web Speech API support and allow microph
 
 - Speech capture is in `src/hooks/useDreamDictation.js` and `src/screens/SpeakDreamScreen.js`.
 - Storage is in `src/hooks/useDreamJournal.js`.
+- The OpenRouter request is in `src/services/interpretDream.js`.
 - The journal list and detail screens are in `src/screens/`.
 - The original course setup guide is in [`docs/README.md`](docs/README.md); its Expo creation step is already complete for this repository.

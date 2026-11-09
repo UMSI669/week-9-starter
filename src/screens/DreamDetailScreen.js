@@ -3,7 +3,7 @@ import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollVie
 import { SafeAreaView } from 'react-native-safe-area-context';
 import CategoryPicker from '../components/CategoryPicker';
 
-export default function DreamDetailScreen({ dream, onBack, onSave, onDelete }) {
+export default function DreamDetailScreen({ dream, onBack, onSave, onDelete, onInterpret, interpretationStatus }) {
   const [text, setText] = useState(dream.text);
   const [category, setCategory] = useState(dream.category || 'Uncategorized');
   const [saving, setSaving] = useState(false);
@@ -13,6 +13,7 @@ export default function DreamDetailScreen({ dream, onBack, onSave, onDelete }) {
   const [deleting, setDeleting] = useState(false);
 
   const changed = text.trim() !== dream.text || category !== (dream.category || 'Uncategorized');
+  const activeInterpretation = interpretationStatus?.text === dream.text ? interpretationStatus : null;
 
   async function save() {
     setSaving(true);
@@ -71,6 +72,29 @@ export default function DreamDetailScreen({ dream, onBack, onSave, onDelete }) {
           >
             {saving ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.saveText}>Save changes</Text>}
           </Pressable>
+          <View style={styles.interpretationCard}>
+            <Text style={styles.label}>AI interpretation</Text>
+            <Text style={styles.interpretationHint}>A possible theme to reflect on, not a definite meaning.</Text>
+            {activeInterpretation?.loading ? (
+              <View style={styles.loadingRow}>
+                <ActivityIndicator color="#5B4BC4" />
+                <Text style={styles.interpretationHint}>Interpreting your dream…</Text>
+              </View>
+            ) : null}
+            {dream.interpretation ? <Text style={styles.interpretationText}>{dream.interpretation}</Text> : null}
+            {activeInterpretation?.error ? <Text style={styles.error}>{activeInterpretation.error}</Text> : null}
+            {!dream.interpretation && !activeInterpretation?.loading ? (
+              <Pressable
+                accessibilityRole="button"
+                disabled={saving || deleting || changed}
+                onPress={onInterpret}
+                style={[styles.interpretButton, (saving || deleting || changed) && styles.disabled]}
+              >
+                <Text style={styles.interpretButtonText}>{activeInterpretation?.error ? 'Try interpretation again' : 'Generate interpretation'}</Text>
+              </Pressable>
+            ) : null}
+            {changed && !dream.interpretation ? <Text style={styles.interpretationHint}>Save your changes before generating an interpretation.</Text> : null}
+          </View>
           {confirmDelete ? (
             <View style={styles.deleteConfirm}>
               <Text style={styles.deletePrompt}>Delete this dream permanently?</Text>
@@ -109,6 +133,12 @@ const styles = StyleSheet.create({
   success: { color: '#1F7A4D', fontSize: 14 },
   saveButton: { backgroundColor: '#5B4BC4', borderRadius: 12, minHeight: 52, alignItems: 'center', justifyContent: 'center' },
   saveText: { color: '#FFFFFF', fontSize: 17, fontWeight: '700' },
+  interpretationCard: { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#DDD8EE', borderRadius: 16, padding: 16, gap: 12 },
+  interpretationHint: { color: '#625D80', fontSize: 13, lineHeight: 19 },
+  interpretationText: { color: '#1E1B3A', fontSize: 16, lineHeight: 23 },
+  loadingRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  interpretButton: { alignSelf: 'flex-start', borderRadius: 10, backgroundColor: '#ECE8FB', paddingHorizontal: 14, paddingVertical: 10 },
+  interpretButtonText: { color: '#5B4BC4', fontSize: 14, fontWeight: '700' },
   disabled: { opacity: 0.45 },
   deleteButton: { minHeight: 48, alignItems: 'center', justifyContent: 'center' },
   deleteText: { color: '#B42318', fontSize: 16, fontWeight: '700' },

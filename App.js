@@ -6,16 +6,42 @@ import SpeakDreamScreen from './src/screens/SpeakDreamScreen';
 import DreamListScreen from './src/screens/DreamListScreen';
 import DreamDetailScreen from './src/screens/DreamDetailScreen';
 import { useDreamJournal } from './src/hooks/useDreamJournal';
+import { interpretDream } from './src/services/interpretDream';
 
 export default function App() {
   const journal = useDreamJournal();
   const [page, setPage] = useState('speak');
   const [selectedId, setSelectedId] = useState(null);
+  const [interpretationState, setInterpretationState] = useState({});
   const selected = journal.dreams.find((dream) => dream.id === selectedId);
 
+  async function generateInterpretation(id, text) {
+    setInterpretationState((current) => ({ ...current, [id]: { text, loading: true, error: null } }));
+    try {
+      const interpretation = await interpretDream(text);
+      await journal.saveInterpretation(id, text, interpretation);
+      setInterpretationState((current) => current[id]?.text === text
+        ? { ...current, [id]: { text, loading: false, error: null } }
+        : current);
+    } catch (caught) {
+      setInterpretationState((current) => current[id]?.text === text
+        ? { ...current, [id]: { text, loading: false, error: caught?.message || 'Could not interpret this dream.' } }
+        : current);
+    }
+  }
+
   async function saveDream(entry) {
-    await journal.addDream(entry);
+    const dream = await journal.addDream(entry);
+    setSelectedId(dream.id);
     setPage('journal');
+    void generateInterpretation(dream.id, dream.text);
+  }
+
+  async function saveDreamChanges(id, changes) {
+    const previousText = journal.dreams.find((dream) => dream.id === id)?.text;
+    await journal.updateDream(id, changes);
+    const text = changes.text.trim();
+    if (previousText !== text) void generateInterpretation(id, text);
   }
 
   async function deleteDream(id) {
@@ -28,7 +54,15 @@ export default function App() {
     <SafeAreaProvider>
       <View style={styles.app}>
         {selected ? (
-          <DreamDetailScreen key={selected.id} dream={selected} onBack={() => setSelectedId(null)} onSave={journal.updateDream} onDelete={deleteDream} />
+          <DreamDetailScreen
+            key={selected.id}
+            dream={selected}
+            onBack={() => setSelectedId(null)}
+            onSave={saveDreamChanges}
+            onDelete={deleteDream}
+            onInterpret={() => generateInterpretation(selected.id, selected.text)}
+            interpretationStatus={interpretationState[selected.id]}
+          />
         ) : page === 'journal' ? (
           <DreamListScreen {...journal} onOpen={setSelectedId} onNew={() => setPage('speak')} />
         ) : (
