@@ -1,43 +1,51 @@
 # Dream Journal
 
-Dream Journal lets you speak a dream, review and correct the transcription, choose a category, and save it. The Journal screen lists saved dreams, supports text search and category filtering, and lets you open an entry to edit its text or category or delete it with confirmation. After saving, OpenRouter generates a short AI interpretation that appears on the dream detail screen.
+Dream Journal turns a spoken or typed dream into a saved journal entry. You can correct the transcript, choose a category, search and filter past dreams, edit an entry, or delete it with confirmation. After you save a dream, OpenRouter generates a short AI interpretation on its detail screen. The interpretation suggests possible themes; it is not a definite explanation of the dream.
 
-Dreams and completed interpretations are stored locally with AsyncStorage, so they remain after closing and reopening the app or browser. Browser entries stay in that browser's local storage. They are not synced between devices or backed up by this app. Dream text is sent to OpenRouter for interpretation after saving.
+Dreams and completed interpretations are stored locally with AsyncStorage. They remain after closing and reopening the app or browser, but they do not sync between devices or browsers. Saving a dream sends its text to OpenRouter for interpretation.
 
-## OpenRouter key
+## Set up OpenRouter
 
-Copy [`.env.example`](.env.example) to a new `.env` file in this app's root folder. Replace the placeholder with your own key:
+Create a `.env` file in the app root, next to `package.json`:
 
 ```dotenv
-EXPO_PUBLIC_OPENROUTER_API_KEY=your-key-here
+EXPO_PUBLIC_OPENROUTER_API_KEY=your-openrouter-key
+EXPO_PUBLIC_OPENROUTER_MODEL=nvidia/nemotron-3-ultra-550b-a55b:free
 ```
 
-Restart the Expo server after changing `.env`. The default model is `openai/gpt-4o-mini`; set `EXPO_PUBLIC_OPENROUTER_MODEL` in `.env` to use another OpenRouter chat model. A dream still saves if the request fails, and its detail screen offers a retry button.
+Replace only the key placeholder with your own key. The model shown is the one currently used for this project; you can choose another OpenRouter chat model by changing the model line. If you omit that line, the code defaults to `openai/gpt-4o-mini`. Restart Expo after changing `.env`.
 
-`EXPO_PUBLIC_` values are included in the browser/app bundle. This setup is for the class prototype; a deployed app should keep the key on a backend. Do not commit `.env` or paste your real key into source code.
+The `.env` file is ignored by Git. Keep the key out of commits and documentation. Because `EXPO_PUBLIC_` values are included in the browser/app bundle, this setup is suitable only for the class prototype. A deployed app would keep the key on a backend.
 
-## Run the app
+## Run in a browser
 
 ```bash
 npm install
 npm run web
 ```
 
-Open the local URL printed by Expo, usually `http://localhost:8081`. You can also use `npx expo start --web`. `npx expo run:ios` and `npx expo run:android` are for native builds, not the browser.
+Open the URL Expo prints, usually `http://localhost:8081`. Use a browser with Web Speech API support and allow microphone access. You can type a dream if speech recognition is unavailable. `npx expo run` selects a native build and can require CocoaPods; it is not needed for the browser.
 
-For web voice input, use a browser with Web Speech API support and allow microphone access. If speech recognition is unavailable, you can still type a dream. Mobile voice input requires a development build; Expo Go does not include the native speech module.
+For a mobile development build, use `npx expo run:ios` or `npx expo run:android`. The native speech module is not available in Expo Go.
 
-## Try it
+## Use the app
 
-1. On **Speak**, record a dream or type one. Edit the text and pick a category.
-2. Tap **Save dream**. The app opens the saved entry and shows its AI interpretation when the request finishes.
-3. Search for a word, filter by category, and tap an entry to read, edit, or delete it.
-4. Close and reopen the app to confirm the saved entry is still in Journal.
+1. On **Speak**, record or type a dream, edit the text, choose a category, and tap **Save dream**.
+2. The app opens the saved entry. Its **AI interpretation** section shows a loading state and then the result. If the request fails, the dream remains saved and you can retry from that section.
+3. Open **Journal** to search or filter entries. Tap a dream to edit its text or category, or delete it with confirmation. Changing the saved dream text requests a new interpretation.
+4. Close and reopen the app or browser to see the saved dreams and completed interpretations.
 
-## Project notes
+## OpenRouter troubleshooting
 
-- Speech capture is in `src/hooks/useDreamDictation.js` and `src/screens/SpeakDreamScreen.js`.
-- Storage is in `src/hooks/useDreamJournal.js`.
-- The OpenRouter request is in `src/services/interpretDream.js`.
-- The journal list and detail screens are in `src/screens/`.
-- The original course setup guide is in [`docs/README.md`](docs/README.md); its Expo creation step is already complete for this repository.
+- **Key rejected (401):** Check the key in `.env` and restart Expo if you changed it.
+- **Key spending limit (403):** Raise that key's total limit in OpenRouter and check that the account can use the selected model. Selecting a free model may not override a key limit.
+- **Credits or rate limit (402/429):** Check your OpenRouter account or try again later.
+
+## Project files
+
+- `src/screens/SpeakDreamScreen.js` and `src/hooks/useDreamDictation.js`: dream entry and speech recognition.
+- `src/screens/DreamListScreen.js` and `src/screens/DreamDetailScreen.js`: journal browsing and editing.
+- `src/hooks/useDreamJournal.js`: local storage.
+- `src/services/interpretDream.js`: OpenRouter request and error handling.
+
+The original course setup guide is in [`docs/README.md`](docs/README.md). Its Expo creation step is already complete for this repository.
