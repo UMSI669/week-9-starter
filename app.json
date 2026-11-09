@@ -1,0 +1,39 @@
+{
+  "expo": {
+    "name": "Pantry Week",
+    "slug": "pantry-week",
+    "version": "1.0.0",
+    "scheme": "pantry-week",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "icon": "./assets/icon.png",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.pantryweek.app"
+    },
+    "android": {
+      "package": "com.pantryweek.app",
+      "permissions": [
+        "RECORD_AUDIO"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro",
+      "output": "single"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-sqlite",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Allow Pantry Week to record your spoken shopping list.",
+          "enableBackgroundRecording": false
+        }
+      ],
+      "expo-font",
+      "expo-asset"
+    ]
+  }
+}
