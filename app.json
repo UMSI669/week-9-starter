@@ -1,0 +1,24 @@
+{
+  "expo": {
+    "name": "Kids Times Tables",
+    "slug": "kids-times-tables",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#F8F5EF"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#F8F5EF"
+      }
+    },
+    "web": {
+      "bundler": "metro"
+    }
+  }
+}
