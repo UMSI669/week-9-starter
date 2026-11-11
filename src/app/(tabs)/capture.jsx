@@ -30,7 +30,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
 import { CAPTURE_STATES, MAX_RECORDING_MS, useDreamCapture } from '../../hooks/useDreamCapture';
 import { createDream } from '../../store/dreamsSlice';
-import { selectTranscriptionMode } from '../../store/settingsSlice';
+import {
+  selectDowngradedFromPhone,
+  selectNativeSpeechAvailable,
+  selectTranscriptionMode,
+} from '../../store/settingsSlice';
 import { ANALYSIS_NOTICE, analyzeDreamText, analysisToDreamFields } from '../../services/dreamAnalysis';
 import { CLOUD_NOTICE } from '../../services/stt/cloudStt';
 import { MODE_DESCRIPTIONS, MODE_LABELS, TRANSCRIPTION_MODES } from '../../services/stt';
@@ -56,6 +60,8 @@ export default function CaptureScreen() {
   const router = useRouter();
   const dispatch = useDispatch();
   const mode = useSelector(selectTranscriptionMode);
+  const nativeSpeechAvailable = useSelector(selectNativeSpeechAvailable);
+  const downgradedFromPhone = useSelector(selectDowngradedFromPhone);
 
   const capture = useDreamCapture({ mode });
   const {
@@ -207,6 +213,16 @@ export default function CaptureScreen() {
                 onPress={() => router.push('/settings')}
               />
             </Card>
+
+            {!nativeSpeechAvailable ? (
+              <StatusMessage tone="info">
+                This build cannot use your phone&apos;s own speech service — Expo Go does not
+                include it. Cloud transcription and typing both work here.
+                {downgradedFromPhone
+                  ? ' Your saved preference for phone transcription was switched to cloud.'
+                  : ''}
+              </StatusMessage>
+            ) : null}
 
             {mode === TRANSCRIPTION_MODES.CLOUD ? (
               <StatusMessage tone="warning">{CLOUD_NOTICE}</StatusMessage>

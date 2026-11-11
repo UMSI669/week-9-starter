@@ -11,10 +11,10 @@ device-dependent item is untested**. The commands to test them are given.
 
 ## Verified by automated tests
 
-207 tests, all passing, no network access and no cost.
+223 tests, all passing, no network access and no cost.
 
 ```bash
-npm test                # 161 tests (jest-expo)
+npm test                # 177 tests (jest-expo)
 cd server && npm test   # 46 tests (node:test)
 ```
 
@@ -152,6 +152,23 @@ Store-level, over real SQLite, so this is the path a fresh install actually take
 | Newest-first ordering, counts across all 8 categories | Totals to 16 |
 | Category filtering and search over title, transcript, and tags | |
 | Counts update immediately after every mutation | Creating a dream, changing a category (one cloud down, another up), deleting, and Undo restoring the record with its original id, date, and seed |
+
+### Speech failure messages — `src/services/__tests__/speechErrors.test.js`
+
+Found on a real device run: the iOS Simulator cannot construct an
+`SFSpeechRecognizer`, and `isRecognitionAvailable()` returns `true` there
+anyway, so the failure only appears when `start()` is called. The app surfaced
+the bare native string "failed to initialize recognizer" with no guidance.
+
+| Verified | Detail |
+|---|---|
+| Recognizer-init failures name the Simulator as the cause | Six real message variants, including both spellings of "initialise" |
+| They say recording needs a physical iPhone | |
+| Audio-session failures explain the microphone is unavailable | |
+| Permission failures are distinguished from hardware failures | |
+| Every recognised failure offers typed entry as the alternative | |
+| An unrecognised message passes through unchanged | Never replaced with an invented explanation |
+| No input ever yields an empty message | `null`, `undefined`, blank strings, empty `Error` |
 
 ### Export text — `src/services/__tests__/dreamExportText.test.js`
 

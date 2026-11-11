@@ -266,9 +266,62 @@ The model replied with something that is not a valid card. Nothing was saved and
 your transcript is intact — you can try again, or save the transcript on its
 own. The server does not retry automatically, because the call is billable.
 
+**iOS: "App Transport Security policy requires the use of a secure connection"**
+
+Your computer has a **public** IP address, and iOS blocks plain HTTP to those.
+
+Expo's generated `Info.plist` already sets `NSAllowsLocalNetworking = true`,
+but that exempts **private** ranges only: `10.x`, `172.16-31.x`, `192.168.x`,
+`169.254.x`, and localhost. On a campus or corporate network your computer
+often gets a public address (U-M hands out `35.x`, for example), which ATS
+treats as the open internet.
+
+The fix is to get onto a private address rather than to weaken ATS:
+
+```bash
+npm run set-ip     # prints every interface and flags public ones
+```
+
+Put your phone on Personal Hotspot and join the computer to it. You will get a
+`172.20.10.x` or `10.x` address, which ATS permits over HTTP with no config
+change and nothing weakened. This also sidesteps campus Wi-Fi client
+isolation, which usually blocks phone-to-laptop connections entirely.
+
+Then restart Metro — **no native rebuild is needed**, because `EXPO_PUBLIC_*`
+values are read by Metro on your computer at bundle time:
+
+```bash
+npx expo start --dev-client --clear
+```
+
+If you genuinely must stay on a public address, add an explicit exception for
+that one host in `app.json` and re-run `npx expo prebuild --platform ios`:
+
+```json
+"ios": {
+  "infoPlist": {
+    "NSAppTransportSecurity": {
+      "NSAllowsLocalNetworking": true,
+      "NSExceptionDomains": {
+        "35.3.54.206": { "NSExceptionAllowsInsecureHTTPLoads": true }
+      }
+    }
+  }
+}
+```
+
+That is development-only. Remove it before shipping, and never set
+`NSAllowsArbitraryLoads: true` — it disables ATS for the whole app, including
+release builds. Do not weaken release network security to make local HTTP work.
+
 **Phone cannot reach the backend**
 Do not use `localhost` on a device. Check network reachability, `HOST=0.0.0.0`,
-and your firewall.
+and your firewall. On campus Wi-Fi, client isolation commonly blocks
+phone-to-laptop traffic no matter how the app is configured; a phone hotspot is
+the reliable workaround.
+
+Run `npm run set-ip` whenever you change networks. It rewrites only the
+`EXPO_PUBLIC_API_BASE_URL` line in `.env`, leaving your access token untouched.
 
 **"Native module unavailable" / the app crashes on launch**
 You are on Expo Go, or the build predates a native dependency change. Install a

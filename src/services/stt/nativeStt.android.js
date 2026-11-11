@@ -24,8 +24,19 @@
  * repository. See VERIFICATION.md.
  */
 
-import { ExpoSpeechRecognitionModule } from 'expo-speech-recognition';
+import { SPEECH_MODULE_MISSING, getSpeechModule } from './speechModule';
 import { claimMicrophone } from './micLock';
+
+/**
+ * The native module, or a thrown explanation when this build does not have it.
+ * Resolved per call rather than at import, so a missing module degrades to a
+ * clear message instead of crashing the app at launch.
+ */
+function speechOrThrow() {
+  const module = getSpeechModule();
+  if (!module) throw new Error(SPEECH_MODULE_MISSING);
+  return module;
+}
 
 let activeSession = null;
 
@@ -51,17 +62,26 @@ export const nativeStt = {
    * checked as well.
    */
   async getAvailability() {
+    const speech = getSpeechModule();
+    if (!speech) {
+      return {
+        available: false,
+        permissionGranted: false,
+        services: [],
+        message: SPEECH_MODULE_MISSING,
+      };
+    }
     try {
-      const available = ExpoSpeechRecognitionModule.isRecognitionAvailable();
+      const available = speech.isRecognitionAvailable();
       let services = [];
       try {
-        services = ExpoSpeechRecognitionModule.getSpeechRecognitionServices() || [];
+        services = speech.getSpeechRecognitionServices() || [];
       } catch (_error) {
         // Older module versions may not expose this; fall back to the flag.
         services = [];
       }
 
-      const permission = await ExpoSpeechRecognitionModule.getPermissionsAsync();
+      const permission = await speech.getPermissionsAsync();
       const usable = available && (services.length > 0 || services.length === 0);
 
       return {
@@ -86,6 +106,7 @@ export const nativeStt = {
   },
 
   async startListening({ onPartial, onFinal, onError, onEnd, language = 'en-US' }) {
+    const speech = speechOrThrow();
     if (activeSession) {
       throw new Error('A recording session is already active.');
     }
@@ -95,7 +116,7 @@ export const nativeStt = {
       throw new Error(availability.message);
     }
 
-    const permission = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
+    const permission = await speech.requestPermissionsAsync();
     if (!permission.granted) {
       throw new Error(
         'Microphone permission was denied. You can type your dream instead, or allow access in ' +
@@ -117,7 +138,7 @@ export const nativeStt = {
     const startEngine = () => {
       if (session.stopped) return;
       try {
-        ExpoSpeechRecognitionModule.start({
+        speech.start({
           lang: session.language,
           interimResults: true,
           continuous: true,
@@ -131,7 +152,7 @@ export const nativeStt = {
     };
 
     session.subscriptions.push(
-      ExpoSpeechRecognitionModule.addListener('result', (event) => {
+      speech.addListener('result', (event) => {
         const text = event.results?.[0]?.transcript?.trim() || '';
         if (!event.isFinal) {
           session.lastFinalText = null;
@@ -142,10 +163,10 @@ export const nativeStt = {
         session.lastFinalText = text;
         onFinal?.({ transcript: text, isFinal: true });
       }),
-      ExpoSpeechRecognitionModule.addListener('speechstart', () => {
+      speech.addListener('speechstart', () => {
         session.lastFinalText = null;
       }),
-      ExpoSpeechRecognitionModule.addListener('error', (event) => {
+      speech.addListener('error', (event) => {
         if (event.error === 'aborted') return;
 
         // ERROR_NO_MATCH and ERROR_SPEECH_TIMEOUT are Android saying "that
@@ -160,7 +181,7 @@ export const nativeStt = {
 
         onError?.(translateError(event));
       }),
-      ExpoSpeechRecognitionModule.addListener('end', () => {
+      speech.addListener('end', () => {
         if (session.stopped) {
           clearSession(session);
           onEnd?.();
@@ -188,7 +209,7 @@ export const nativeStt = {
     session.stopped = true;
     if (session.restartTimer) clearTimeout(session.restartTimer);
     try {
-      ExpoSpeechRecognitionModule.stop();
+      getSpeechModule()?.stop();
     } catch (_error) {
       clearSession(session);
     }
@@ -200,7 +221,7 @@ export const nativeStt = {
     session.stopped = true;
     if (session.restartTimer) clearTimeout(session.restartTimer);
     try {
-      ExpoSpeechRecognitionModule.abort();
+      getSpeechModule()?.abort();
     } finally {
       clearSession(session);
     }

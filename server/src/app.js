@@ -112,8 +112,17 @@ export function createApp({ dependencies = {} } = {}) {
       next();
     },
     (request, response, next) => {
+      // Timing starts before multer reads the body, so a slow upload can be
+      // told apart from a slow model when a request times out.
+      request.receivedAt = Date.now();
+      console.log('[transcribe] request received, reading upload...');
       upload.single('file')(request, response, (error) => {
         if (!error) {
+          const bytes = request.file?.size ?? 0;
+          console.log(
+            `[transcribe] upload complete: ${(bytes / 1024 / 1024).toFixed(2)} MB in ` +
+              `${Date.now() - request.receivedAt} ms`,
+          );
           next();
           return;
         }
@@ -163,12 +172,18 @@ export function createApp({ dependencies = {} } = {}) {
         }
 
         const model = resolveModel(request.body?.model, config.openRouter.transcriptionModel);
+        const modelStartedAt = Date.now();
+        console.log(`[transcribe] calling model ${model}...`);
         const result = await transcribe({
           buffer: file.buffer,
           filename: file.originalname || 'dream.wav',
           mimeType,
           model,
         });
+        console.log(
+          `[transcribe] model replied in ${Date.now() - modelStartedAt} ms ` +
+            `(total ${Date.now() - request.receivedAt} ms)`,
+        );
         response.json({ ok: true, ...result });
       } catch (error) {
         next(error);

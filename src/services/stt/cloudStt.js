@@ -80,7 +80,14 @@ export const cloudStt = {
 
     const body = await apiRequest('/api/transcribe', {
       formData,
-      timeoutMs: 120_000,
+      /**
+       * This budget must cover UPLOAD TIME PLUS the backend's own 90s cap on
+       * the transcription model. Audio here is uncompressed 16 kHz mono WAV
+       * (32 KB per second), so a 3 minute dream is around 5.7 MB, which on a
+       * phone hotspot uplink can take a minute on its own. At the old 120s
+       * the client gave up before the backend had a chance to answer.
+       */
+      timeoutMs: 240_000,
       signal,
     });
 

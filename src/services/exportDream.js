@@ -15,10 +15,41 @@ import * as Clipboard from 'expo-clipboard';
 import * as Sharing from 'expo-sharing';
 import * as MediaLibrary from 'expo-media-library';
 import { Directory, File, Paths } from 'expo-file-system';
-import { captureRef } from 'react-native-view-shot';
 import { buildDreamExportText } from './dreamExportText';
 
 const EXPORT_DIRECTORY_NAME = 'dream-exports';
+
+/**
+ * react-native-view-shot is a third-party native module. Whether a given
+ * client has it depends on how that client was built, and Expo Go ships a
+ * fixed module set that this project cannot change.
+ *
+ * Because this file is imported during app startup (the root layout clears
+ * stale exports), a static import of a missing native module would crash the
+ * whole app at launch. Resolving it lazily turns that into one unavailable
+ * feature: PNG export reports itself as unsupported, and text export,
+ * recording, storage, and everything else keep working.
+ */
+let captureRefImpl;
+
+function getCaptureRef() {
+  if (captureRefImpl !== undefined) return captureRefImpl;
+  try {
+    captureRefImpl = require('react-native-view-shot').captureRef ?? null;
+  } catch (_error) {
+    captureRefImpl = null;
+  }
+  return captureRefImpl;
+}
+
+/** True when this build can render a card to PNG. */
+export function isImageExportAvailable() {
+  return getCaptureRef() !== null;
+}
+
+export const IMAGE_EXPORT_UNAVAILABLE =
+  'Saving a dream card as an image needs a development build \u2014 Expo Go does not include the ' +
+  'screenshot module. Copy text and Share text both work here.';
 
 export class ExportError extends Error {
   constructor(message, code = 'export_failed') {
@@ -81,6 +112,11 @@ export async function captureDreamCard({ viewRef, dream }) {
   // One frame of breathing room so fonts and the final layout have settled;
   // capturing mid-layout is what produces clipped or blank images.
   await new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 60)));
+
+  const captureRef = getCaptureRef();
+  if (!captureRef) {
+    throw new ExportError(IMAGE_EXPORT_UNAVAILABLE, 'capture_unavailable');
+  }
 
   let tempUri;
   try {

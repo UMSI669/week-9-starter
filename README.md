@@ -58,9 +58,13 @@ Put the same value in **both** files — `API_AUTH_TOKEN` in `server/.env` and
 IDs in `server/.env` only, and your computer's LAN address in `.env`:
 
 ```bash
-# macOS: find your LAN address
-ipconfig getifaddr en0
+npm run set-ip      # detects your LAN address and writes it into .env
 ```
+
+That script also warns you when the address is public, which iOS App Transport
+Security blocks over plain HTTP — see the ATS entry in
+[API_SETUP.md](API_SETUP.md#troubleshooting). Keep `HOST=0.0.0.0` in
+`server/.env` so the backend keeps working when your address changes.
 
 ```ini
 # .env
@@ -117,7 +121,7 @@ need a rebuild.
 ## Checks
 
 ```bash
-npm test             # 161 app tests (jest-expo), no network, no cost
+npm test             # 177 app tests (jest-expo), no network, no cost
 npm run lint         # eslint via expo lint
 npx expo-doctor      # 20 project health checks
 

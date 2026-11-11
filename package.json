@@ -9,7 +9,9 @@
     "ios": "expo run:ios",
     "lint": "expo lint",
     "test": "jest",
-    "doctor": "expo-doctor"
+    "doctor": "expo-doctor",
+    "set-ip": "node scripts/set-backend-ip.mjs",
+    "go": "expo start --go"
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.14.0",
