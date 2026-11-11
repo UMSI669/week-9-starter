@@ -1,0 +1,22 @@
+{
+  "name": "dream-decoder-server",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Dream Decoder backend. Holds the OpenRouter key so the mobile app never has to.",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "node --watch src/index.js",
+    "start": "node src/index.js",
+    "test": "node --test --test-timeout=20000 \"src/*.test.js\"",
+    "test:paid": "RUN_PAID_TESTS=1 node --test --test-timeout=120000 src/paid/analysis.integration.js"
+  },
+  "engines": {
+    "node": ">=20.19.4"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "multer": "^1.4.5-lts.1"
+  }
+}
