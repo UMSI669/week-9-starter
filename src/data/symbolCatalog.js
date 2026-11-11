@@ -142,13 +142,47 @@ export const GENERAL_SYMBOL_ENTRY = {
   emoji: '✨',
   aliases: [],
   isGeneral: true,
+  inCatalog: false,
   associations: [
-    'This symbol is not in the bundled catalog, which is normal — dream images are personal.',
-    'Its associations could come from your own memory, culture, language, or the day before.',
-    'What it means here might be different from what it would mean in anyone else’s dream.',
+    'Some dream images belong only to the dreamer. They carry weight because of where you have met them before, not because of any general rule.',
+    'An image like this could reflect something you were already carrying — a place, a person, or a feeling from the day before that the dream reached for.',
+    'The same image might mean something quite different in someone else’s dream, so your own association matters more than any list.',
   ],
   reflectionQuestion: 'What is the first thing this image reminds you of?',
 };
+
+/**
+ * A reflection for a symbol the catalog does not contain.
+ *
+ * The AI chooses a symbol freely, so most dreams produce an image that is not
+ * one of the ten bundled entries. Saying "this symbol is not in the catalog"
+ * tells the reader about our data rather than about their dream, so this builds
+ * a reflection that actually names their image instead.
+ *
+ * It is written, not generated: no AI call, no network, and the same label
+ * always produces the same text. The language stays tentative ("could
+ * reflect", "might connect with") for the same reason the analysis prompt
+ * does — a dream symbol has no fixed meaning to assert.
+ */
+export function personalSymbolEntry(label, emoji) {
+  const name = String(label || '').trim();
+  if (!name) return GENERAL_SYMBOL_ENTRY;
+
+  return {
+    key: '__personal__',
+    label: name,
+    emoji: emoji || GENERAL_SYMBOL_ENTRY.emoji,
+    aliases: [],
+    isGeneral: true,
+    inCatalog: false,
+    associations: [
+      `${name} is an image of your own, so what it means here starts with you rather than with any general list of meanings.`,
+      `It could reflect something you were already carrying — a place, a person, or a feeling from the day before that the dream reached for and reshaped.`,
+      `Another dreamer could meet the same image and find something entirely different in it. What it means here is whatever ${name} has meant to you.`,
+    ],
+    reflectionQuestion: `What does ${name} remind you of in your own life?`,
+  };
+}
 
 export const CATALOG_DISCLAIMER =
   'These are editorial reflection prompts, not research findings. Dream symbols have no universal fixed meaning, and personal and cultural context matter more than any list.';
@@ -176,12 +210,8 @@ export function findSymbolEntry(key) {
  */
 export function resolveSymbolEntry(key, label, emoji) {
   const matched = findSymbolEntry(key) || findSymbolEntry(label);
-  if (matched) return matched;
-  return {
-    ...GENERAL_SYMBOL_ENTRY,
-    label: label || GENERAL_SYMBOL_ENTRY.label,
-    emoji: emoji || GENERAL_SYMBOL_ENTRY.emoji,
-  };
+  if (matched) return { ...matched, inCatalog: true };
+  return personalSymbolEntry(label, emoji);
 }
 
 /** Case-insensitive search over name, aliases, and association text. */

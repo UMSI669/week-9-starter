@@ -31,12 +31,9 @@ import { useDispatch, useSelector } from 'react-redux';
 import { CAPTURE_STATES, MAX_RECORDING_MS, useDreamCapture } from '../../hooks/useDreamCapture';
 import { createDream } from '../../store/dreamsSlice';
 import {
-  selectDowngradedFromPhone,
-  selectNativeSpeechAvailable,
   selectTranscriptionMode,
 } from '../../store/settingsSlice';
 import { ANALYSIS_NOTICE, analyzeDreamText, analysisToDreamFields } from '../../services/dreamAnalysis';
-import { CLOUD_NOTICE } from '../../services/stt/cloudStt';
 import { MODE_DESCRIPTIONS, MODE_LABELS, TRANSCRIPTION_MODES } from '../../services/stt';
 import { getMissingApiConfig, isApiConfigured } from '../../services/apiClient';
 import { deviceTimeZone, formatDuration, nowIso } from '../../services/formatDate';
@@ -60,8 +57,6 @@ export default function CaptureScreen() {
   const router = useRouter();
   const dispatch = useDispatch();
   const mode = useSelector(selectTranscriptionMode);
-  const nativeSpeechAvailable = useSelector(selectNativeSpeechAvailable);
-  const downgradedFromPhone = useSelector(selectDowngradedFromPhone);
 
   const capture = useDreamCapture({ mode });
   const {
@@ -214,20 +209,6 @@ export default function CaptureScreen() {
               />
             </Card>
 
-            {!nativeSpeechAvailable ? (
-              <StatusMessage tone="info">
-                This build cannot use your phone&apos;s own speech service — Expo Go does not
-                include it. Cloud transcription and typing both work here.
-                {downgradedFromPhone
-                  ? ' Your saved preference for phone transcription was switched to cloud.'
-                  : ''}
-              </StatusMessage>
-            ) : null}
-
-            {mode === TRANSCRIPTION_MODES.CLOUD ? (
-              <StatusMessage tone="warning">{CLOUD_NOTICE}</StatusMessage>
-            ) : null}
-
             {error ? (
               <StatusMessage tone="error" announce>
                 {error}
@@ -367,12 +348,16 @@ export default function CaptureScreen() {
                   <StatusMessage tone="info">{ANALYSIS_NOTICE}</StatusMessage>
                 )}
 
+                <Text style={styles.meta}>
+                  Decoding happens once per dream. Check the text above now — after this you can
+                  still edit everything, but from the saved dream&apos;s edit screen.
+                </Text>
                 <Button
                   title="Decode my dream"
                   icon={'✨'}
                   onPress={decode}
                   disabled={!reviewedText || tooLong || !isApiConfigured()}
-                  accessibilityHint="Sends the text above for a reflective interpretation."
+                  accessibilityHint="Sends the text above for a reflective interpretation. This happens once per dream."
                 />
                 <Button
                   title="Save transcript only"
@@ -400,7 +385,7 @@ export default function CaptureScreen() {
             {state === CAPTURE_STATES.REVIEWING_CARD && previewDream ? (
               <>
                 <SectionTitle>Your dream card</SectionTitle>
-                <DreamCard dream={previewDream} onPress={() => {}} />
+                <DreamCard dream={previewDream} previewLines={null} />
                 <Card>
                   <Text style={styles.body}>
                     {previewDream.reflectionQuestion}
@@ -416,11 +401,11 @@ export default function CaptureScreen() {
                     conclusion.
                   </Text>
                   <Button title="Save this dream" onPress={() => save({ withAnalysis: true })} />
-                  <Button
-                    title="Back to the text"
-                    variant="secondary"
-                    onPress={() => setState(CAPTURE_STATES.REVIEWING_TRANSCRIPT)}
-                  />
+                  {/* No route back to the transcript from here. Decoding happens
+                      once per dream: a second pass would spend another billable
+                      call on text the reader has already seen interpreted. The
+                      transcript and every card field stay editable after saving,
+                      from the dream's edit screen. */}
                   <Button title="Discard" variant="ghost" onPress={startOver} />
                 </Card>
               </>

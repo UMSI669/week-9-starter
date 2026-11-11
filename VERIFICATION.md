@@ -11,10 +11,10 @@ device-dependent item is untested**. The commands to test them are given.
 
 ## Verified by automated tests
 
-223 tests, all passing, no network access and no cost.
+264 tests, all passing, no network access and no cost.
 
 ```bash
-npm test                # 177 tests (jest-expo)
+npm test                # 218 tests (jest-expo)
 cd server && npm test   # 46 tests (node:test)
 ```
 

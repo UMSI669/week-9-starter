@@ -2,12 +2,18 @@
  * The dream gallery: newest first, filterable by primary category, searchable
  * over title, transcript, symbol, and tags.
  *
- * Reached from Home's "See all" and from tapping a category cloud, which
- * passes ?category=<key>.
+ * Reached from Home's "See all" and from tapping a category card, which passes
+ * ?category=<key>.
+ *
+ * Layout: the category filter is a single horizontal line of chips that scrolls
+ * sideways, so it costs one row of height no matter how many categories exist.
+ * The dreams themselves are always a vertical list below it — a column is the
+ * faster thing to scan, and a horizontal deck of them collided with the filter
+ * row.
  */
 
 import { useCallback, useMemo, useState } from 'react';
-import { FlatList, StyleSheet, Text, View } from 'react-native';
+import { FlatList, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -72,6 +78,7 @@ export default function GalleryScreen() {
     [categories],
   );
 
+
   return (
     <NightBackground>
       <FlatList
@@ -91,7 +98,13 @@ export default function GalleryScreen() {
               returnKeyType="search"
             />
 
-            <View style={styles.filterRow}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              directionalLockEnabled
+              style={styles.filterScroll}
+              contentContainerStyle={styles.filterRow}
+            >
               <Chip
                 label="All"
                 count={dreams.length}
@@ -110,7 +123,7 @@ export default function GalleryScreen() {
                   accessibilityLabel={`${item.label}, ${item.count} ${item.count === 1 ? 'dream' : 'dreams'}`}
                 />
               ))}
-            </View>
+            </ScrollView>
 
             <SectionTitle>
               {category ? categoryLabel(category) : 'All dreams'}
@@ -161,7 +174,16 @@ export default function GalleryScreen() {
 const styles = StyleSheet.create({
   content: { padding: spacing.lg, paddingBottom: spacing.xxl },
   header: { gap: spacing.md, marginBottom: spacing.md },
-  filterRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  // One line, never wrapping. The row is allowed to run past both screen edges
+  // so a chip can sit half off-screen and show there is more to scroll to.
+  filterRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: 2,
+  },
+  filterScroll: { marginHorizontal: -spacing.lg },
   count: { color: colors.accent, fontSize: fontSizes.body, fontWeight: '700' },
   sortNote: { color: colors.textMuted, fontSize: fontSizes.caption },
   separator: { height: spacing.md },

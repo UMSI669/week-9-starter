@@ -231,7 +231,9 @@ export function Chip({
           {emoji}
         </Text>
       ) : null}
-      <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{label}</Text>
+      <Text numberOfLines={1} style={[styles.chipText, selected && styles.chipTextSelected]}>
+        {label}
+      </Text>
       {typeof count === 'number' ? <Text style={styles.chipCount}>{count}</Text> : null}
       {selected ? (
         <Text accessibilityElementsHidden importantForAccessibility="no" style={styles.chipCheck}>
@@ -289,14 +291,6 @@ export function EmptyState({ title, body, children }) {
       </Text>
       {body ? <Text style={styles.emptyBody}>{body}</Text> : null}
       {children}
-    </View>
-  );
-}
-
-export function DemoBadge({ style }) {
-  return (
-    <View style={[styles.demoBadge, style]}>
-      <Text style={styles.demoBadgeText}>DEMO DATA</Text>
     </View>
   );
 }
@@ -427,21 +421,6 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     maxWidth: 320,
     textAlign: 'center',
-  },
-  demoBadge: {
-    alignSelf: 'flex-start',
-    backgroundColor: 'rgba(243,208,138,0.18)',
-    borderColor: colors.warning,
-    borderRadius: radii.sm,
-    borderWidth: 1,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-  },
-  demoBadgeText: {
-    color: colors.warning,
-    fontSize: 10,
-    fontWeight: '900',
-    letterSpacing: 0.8,
   },
   loading: { alignItems: 'center', gap: spacing.md, paddingVertical: spacing.xxl },
   loadingText: { color: colors.textSecondary, fontSize: fontSizes.body },

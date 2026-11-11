@@ -121,7 +121,7 @@ need a rebuild.
 ## Checks
 
 ```bash
-npm test             # 177 app tests (jest-expo), no network, no cost
+npm test             # 218 app tests (jest-expo), no network, no cost
 npm run lint         # eslint via expo lint
 npx expo-doctor      # 20 project health checks
 
@@ -221,6 +221,7 @@ has not.
 | File | What it covers |
 |---|---|
 | [AGENTS.md](AGENTS.md) | The implementation brief this app was built to |
+| [EXPO_GO_SETUP.md](EXPO_GO_SETUP.md) | Running it in Expo Go: env setup, networking, troubleshooting |
 | [API_SETUP.md](API_SETUP.md) | OpenRouter key, model choice, backend, device setup |
 | [USERS.md](USERS.md) | The original API and device setup notes |
 | [VERIFICATION.md](VERIFICATION.md) | Tested behaviour vs. untested assumptions |

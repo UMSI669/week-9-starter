@@ -188,7 +188,10 @@ export default function DreamDetailScreen() {
         </Card>
       ) : null}
 
-      <DreamCard dream={dream} onPress={() => {}} />
+      {/* previewLines={null} - the detail screen must not truncate. The complaint
+          this fixes: the card clipped the reflection at three lines, and tapping
+          it did nothing, so there was no way to reach the rest. */}
+      <DreamCard dream={dream} previewLines={null} />
 
       {dream.interpretation ? (
         <Card>
@@ -228,17 +231,31 @@ export default function DreamDetailScreen() {
           </Text>
           <Text style={styles.symbolLabel}>{dream.symbolLabel || 'None recorded'}</Text>
         </View>
-        <Text style={styles.body}>{symbolEntry.associations[0]}</Text>
-        <Button
-          title="Open in the symbol catalog"
-          variant="secondary"
-          onPress={() =>
-            router.push({
-              pathname: '/symbols',
-              params: { symbol: dream.symbolKey, label: dream.symbolLabel },
-            })
-          }
-        />
+        {symbolEntry.associations.map((association) => (
+          <Text key={association} style={styles.body}>
+            {association}
+          </Text>
+        ))}
+        {symbolEntry.reflectionQuestion ? (
+          <View style={styles.questionBlock}>
+            <Text style={styles.questionLabel}>Something to sit with</Text>
+            <Text style={styles.question}>{symbolEntry.reflectionQuestion}</Text>
+          </View>
+        ) : null}
+        {/* Only catalog symbols have a catalog page worth opening. For an image
+            of the dreamer's own, the reflection above is the whole entry. */}
+        {symbolEntry.inCatalog ? (
+          <Button
+            title="Open in the symbol catalog"
+            variant="secondary"
+            onPress={() =>
+              router.push({
+                pathname: '/symbols',
+                params: { symbol: dream.symbolKey, label: dream.symbolLabel },
+              })
+            }
+          />
+        ) : null}
       </Card>
 
       <Card>
