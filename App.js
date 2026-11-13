@@ -1,6 +1,7 @@
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   AppState,
   Keyboard,
   KeyboardAvoidingView,
@@ -653,11 +654,13 @@ function QuizScreen({
   const showingWrongAnswer = phase === 'incorrect-feedback';
   const recordingPreview = voiceStatus !== 'idle';
   const processing = voiceStatus === 'processing';
-  const listeningText = voiceStatus === 'starting'
-    ? 'Getting the microphone ready…'
+  const starting = voiceStatus === 'starting';
+  const recording = voiceStatus === 'recording';
+  const stopButtonLabel = starting
+    ? 'Getting the microphone ready'
     : processing
-      ? 'Checking your answer…'
-      : 'Say your answer, then tap stop.';
+      ? 'Checking your answer'
+      : 'Stop recording';
   return (
     <ScrollView contentContainerStyle={styles.quizContent} showsVerticalScrollIndicator={false}>
       <View style={styles.quizTopRow}>
@@ -734,25 +737,38 @@ function QuizScreen({
 
       {recordingPreview ? (
         <View style={styles.recordingActionBlock}>
-          <Waveform />
+          {/* The button itself shows the state: spinner while the mic gets ready,
+              "Stop recording" while listening, spinner + "Checking…" while transcribing. */}
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Stop recording"
-            accessibilityHint="Stops listening and checks your answer"
-            accessibilityState={{ disabled: voiceStatus !== 'recording' }}
-            disabled={voiceStatus !== 'recording'}
+            accessibilityLabel={stopButtonLabel}
+            accessibilityHint={recording ? 'Stops listening and checks your answer' : undefined}
+            accessibilityState={{ disabled: !recording, busy: !recording }}
+            disabled={!recording}
             onPress={onStopRecording}
             style={({ pressed }) => [
               styles.stopRecordingButton,
-              pressed && styles.buttonPressed,
-              voiceStatus !== 'recording' && styles.buttonDisabled,
+              pressed && recording && styles.buttonPressed,
             ]}
           >
-            <Text style={styles.stopRecordingButtonText}>
-              {processing ? 'Checking…' : '■   Stop recording'}
-            </Text>
+            {recording ? (
+              <Text style={styles.stopRecordingButtonText}>■   Stop recording</Text>
+            ) : (
+              <View style={styles.stopRecordingBusy}>
+                <ActivityIndicator color={COLORS.white} />
+                {processing ? <Text style={styles.stopRecordingButtonText}>Checking…</Text> : null}
+              </View>
+            )}
           </Pressable>
-          <Text accessibilityLiveRegion="polite" style={styles.listeningHint}>{listeningText}</Text>
+          {/* Invisible copy of the "Or type your answer" link so the button sits exactly
+              where "Record answer" was. */}
+          <Text
+            style={[styles.typedHint, styles.hiddenSpacer]}
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+          >
+            Or type your answer
+          </Text>
         </View>
       ) : showingWrongAnswer ? (
         <View style={styles.waitingBlock}>
@@ -785,21 +801,6 @@ function QuizScreen({
         </View>
       )}
     </ScrollView>
-  );
-}
-
-function Waveform() {
-  const barHeights = [9, 17, 27, 15, 22, 12, 20];
-  return (
-    <View
-      style={styles.waveform}
-      accessibilityElementsHidden
-      importantForAccessibility="no-hide-descendants"
-    >
-      {barHeights.map((height, index) => (
-        <View key={index} style={[styles.waveformBar, { height }]} />
-      ))}
-    </View>
   );
 }
 
@@ -1086,12 +1087,12 @@ const styles = StyleSheet.create({
   recordButton: { minHeight: 56 },
   typedHint: { marginTop: 9, color: COLORS.purple, textAlign: 'center', fontSize: 13, textDecorationLine: 'underline' },
   voiceMessage: { marginBottom: 10, color: COLORS.red, textAlign: 'center', fontSize: 13, lineHeight: 19 },
-  recordingActionBlock: { marginTop: 44, alignItems: 'stretch' },
-  waveform: { height: 32, marginBottom: 13, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
-  waveformBar: { width: 5, borderRadius: 4, backgroundColor: COLORS.purple },
+  // Pinned to the bottom like answerActionBlock so the button doesn't move when recording starts.
+  recordingActionBlock: { marginTop: 'auto', paddingTop: 34, alignItems: 'stretch' },
   stopRecordingButton: { minHeight: 56, borderRadius: 20, backgroundColor: COLORS.ink, alignItems: 'center', justifyContent: 'center' },
   stopRecordingButtonText: { color: COLORS.white, fontSize: 16, fontWeight: '800' },
-  listeningHint: { marginTop: 14, color: COLORS.purple, textAlign: 'center', fontSize: 13 },
+  stopRecordingBusy: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  hiddenSpacer: { opacity: 0 },
   waitingBlock: { alignItems: 'center', marginTop: 42 },
   waitingText: { color: COLORS.ink, fontSize: 16, fontWeight: '700' },
   progressTrack: { marginTop: 16, width: '62%', height: 6, borderRadius: 5, backgroundColor: '#E6E0D7', overflow: 'hidden' },
