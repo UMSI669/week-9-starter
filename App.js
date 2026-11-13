@@ -21,6 +21,11 @@ import {
   validateTypedAnswer,
 } from './src/quiz';
 import { loadSessions, saveSession } from './src/sessionStorage';
+import { useVoiceAnswer } from './src/hooks/useVoiceAnswer';
+import { isOpenRouterConfigured } from './src/services/stt/openRouterConfig';
+import { parseSpokenAnswer } from './src/spokenNumber';
+
+const VOICE_CONFIGURED = isOpenRouterConfigured();
 
 const COLORS = {
   ink: '#30234F',
@@ -65,6 +70,7 @@ function KidsTimesTables() {
   const [sessions, setSessions] = useState([]);
   const [saveFailed, setSaveFailed] = useState(false);
   const [storageLoading, setStorageLoading] = useState(true);
+  const [voiceMessage, setVoiceMessage] = useState('');
 
   const answerInputRef = useRef(null);
   const deadlineRef = useRef(null);
@@ -83,6 +89,15 @@ function KidsTimesTables() {
   const feedbackMessageIdRef = useRef(0);
   const submissionLockRef = useRef(false);
   const submissionUnlockTimeoutRef = useRef(null);
+  const handleTranscriptRef = useRef(() => {});
+
+  // Voice is the default way to answer. Results arrive through these callbacks,
+  // including when the 10-second recording limit stops the microphone.
+  const voice = useVoiceAnswer({
+    onTranscript: (transcript) => handleTranscriptRef.current(transcript),
+    onError: (message) => setVoiceMessage(message),
+  });
+  const cancelVoice = voice.cancel;
 
   screenRef.current = screen;
   questionRef.current = question;
@@ -120,6 +135,8 @@ function KidsTimesTables() {
     if (submissionUnlockTimeoutRef.current) clearTimeout(submissionUnlockTimeoutRef.current);
     submissionUnlockTimeoutRef.current = null;
     submissionLockRef.current = false;
+    cancelVoice();
+    setVoiceMessage('');
     setTypedDialogOpen(false);
     setExitDialogOpen(false);
     setAnswerFeedback(null);
@@ -147,7 +164,7 @@ function KidsTimesTables() {
         setSaveFailed(true);
       }
     }
-  }, [clearFeedbackTimer]);
+  }, [cancelVoice, clearFeedbackTimer]);
 
   finishSessionRef.current = finishSession;
 
@@ -169,6 +186,8 @@ function KidsTimesTables() {
     const interval = setInterval(updateFromDeadline, 150);
     const appStateSubscription = AppState.addEventListener('change', (nextState) => {
       if (nextState === 'active') updateFromDeadline();
+      // Recording does not continue in the background; drop the attempt.
+      if (nextState === 'background') cancelVoice();
     });
     updateFromDeadline();
 
@@ -176,7 +195,7 @@ function KidsTimesTables() {
       clearInterval(interval);
       appStateSubscription.remove();
     };
-  }, [screen]);
+  }, [cancelVoice, screen]);
 
   useEffect(() => {
     if (!typedDialogOpen) return undefined;
@@ -190,6 +209,8 @@ function KidsTimesTables() {
   }, [clearFeedbackTimer]);
 
   const beginQuiz = useCallback((nextDifficulty) => {
+    cancelVoice();
+    setVoiceMessage('');
     clearFeedbackTimer();
     if (submissionUnlockTimeoutRef.current) clearTimeout(submissionUnlockTimeoutRef.current);
     submissionLockRef.current = false;
@@ -223,9 +244,11 @@ function KidsTimesTables() {
     setExitDialogOpen(false);
     setTypedDialogOpen(false);
     setScreen('quiz');
-  }, [clearFeedbackTimer]);
+  }, [cancelVoice, clearFeedbackTimer]);
 
   const leaveQuiz = useCallback(() => {
+    cancelVoice();
+    setVoiceMessage('');
     generationRef.current += 1;
     feedbackMessageIdRef.current += 1;
     if (submissionUnlockTimeoutRef.current) clearTimeout(submissionUnlockTimeoutRef.current);
@@ -239,9 +262,9 @@ function KidsTimesTables() {
     setAnswerFeedback(null);
     setPhase('idle');
     setScreen('home');
-  }, [clearFeedbackTimer]);
+  }, [cancelVoice, clearFeedbackTimer]);
 
-  // Voice integration boundary: typed answers and future final transcripts both call this same function.
+  // Voice integration boundary: typed answers and voice transcripts both call this same function.
   const submitAnswer = useCallback((answer) => {
     if (
       endedRef.current ||
@@ -267,6 +290,7 @@ function KidsTimesTables() {
     const isCorrect = answer === currentQuestion.left * currentQuestion.right;
     setTypedDialogOpen(false);
     setValidationMessage('');
+    setVoiceMessage('');
     Keyboard.dismiss();
 
     if (isCorrect) {
@@ -348,6 +372,33 @@ function KidsTimesTables() {
     submitAnswer(parsed.answer);
   }, [submitAnswer, typedAnswer]);
 
+  // Final transcript -> validated integer -> submitAnswer. Unclear speech asks
+  // the player to try again and never counts as a wrong answer.
+  handleTranscriptRef.current = (transcript) => {
+    if (endedRef.current || screenRef.current !== 'quiz' || phaseRef.current !== 'answering') return;
+    const parsed = parseSpokenAnswer(transcript);
+    if (!parsed.valid) {
+      setVoiceMessage(parsed.message);
+      return;
+    }
+    setVoiceMessage('');
+    submitAnswer(parsed.answer);
+  };
+
+  const startVoiceAnswer = async () => {
+    if (phaseRef.current !== 'answering' || endedRef.current) return;
+    if (!VOICE_CONFIGURED) {
+      openTypedDialog();
+      return;
+    }
+    setVoiceMessage('');
+    try {
+      await voice.start();
+    } catch (error) {
+      setVoiceMessage(`${error.message} You can type your answer instead.`);
+    }
+  };
+
   const openRecords = useCallback(async () => {
     setStorageLoading(true);
     setSessions(await loadSessions());
@@ -362,6 +413,8 @@ function KidsTimesTables() {
 
   const openTypedDialog = () => {
     if (phaseRef.current !== 'answering' || endedRef.current) return;
+    cancelVoice();
+    setVoiceMessage('');
     setTypedAnswer('');
     setValidationMessage('');
     setTypedDialogOpen(true);
@@ -395,9 +448,15 @@ function KidsTimesTables() {
             feedback={answerFeedback}
             feedbackSecondsLeft={feedbackSecondsLeft}
             feedbackProgress={feedbackProgress}
-            recordingPreview={typedDialogOpen}
-            onOpenAnswer={openTypedDialog}
-            onBack={() => setExitDialogOpen(true)}
+            voiceStatus={voice.status}
+            voiceMessage={voiceMessage}
+            onRecordAnswer={startVoiceAnswer}
+            onStopRecording={voice.stopAndTranscribe}
+            onTypeAnswer={openTypedDialog}
+            onBack={() => {
+              cancelVoice();
+              setExitDialogOpen(true);
+            }}
           />
         )}
         {screen === 'results' && (
@@ -470,7 +529,9 @@ function KidsTimesTables() {
           <View style={styles.modalCard} accessibilityViewIsModal>
             <Text accessibilityRole="header" style={styles.modalTitle}>Type your answer</Text>
             <Text style={styles.modalDescription}>
-              Type your answer here. Voice answers will be added later.
+              {VOICE_CONFIGURED
+                ? 'Type your answer here.'
+                : 'Type your answer here. Voice answers need an OpenRouter API key in .env.'}
             </Text>
             <TextInput
               ref={answerInputRef}
@@ -582,11 +643,21 @@ function QuizScreen({
   feedback,
   feedbackSecondsLeft,
   feedbackProgress,
-  recordingPreview,
-  onOpenAnswer,
+  voiceStatus,
+  voiceMessage,
+  onRecordAnswer,
+  onStopRecording,
+  onTypeAnswer,
   onBack,
 }) {
   const showingWrongAnswer = phase === 'incorrect-feedback';
+  const recordingPreview = voiceStatus !== 'idle';
+  const processing = voiceStatus === 'processing';
+  const listeningText = voiceStatus === 'starting'
+    ? 'Getting the microphone ready…'
+    : processing
+      ? 'Checking your answer…'
+      : 'Say your answer, then tap stop.';
   return (
     <ScrollView contentContainerStyle={styles.quizContent} showsVerticalScrollIndicator={false}>
       <View style={styles.quizTopRow}>
@@ -629,7 +700,9 @@ function QuizScreen({
       )}
 
       {recordingPreview ? (
-        <Text accessibilityLiveRegion="polite" style={styles.listeningHeading}>Listening…</Text>
+        <Text accessibilityLiveRegion="polite" style={styles.listeningHeading}>
+          {processing ? 'Thinking…' : 'Listening…'}
+        </Text>
       ) : feedback?.tone === 'correct' ? (
         <Text accessibilityLiveRegion="polite" style={styles.quickCorrect}>✓ Correct!</Text>
       ) : showingWrongAnswer ? (
@@ -662,10 +735,24 @@ function QuizScreen({
       {recordingPreview ? (
         <View style={styles.recordingActionBlock}>
           <Waveform />
-          <View style={styles.stopRecordingButton} accessible={false}>
-            <Text style={styles.stopRecordingButtonText}>■   Stop recording</Text>
-          </View>
-          <Text style={styles.listeningHint}>Listening to your answer…</Text>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Stop recording"
+            accessibilityHint="Stops listening and checks your answer"
+            accessibilityState={{ disabled: voiceStatus !== 'recording' }}
+            disabled={voiceStatus !== 'recording'}
+            onPress={onStopRecording}
+            style={({ pressed }) => [
+              styles.stopRecordingButton,
+              pressed && styles.buttonPressed,
+              voiceStatus !== 'recording' && styles.buttonDisabled,
+            ]}
+          >
+            <Text style={styles.stopRecordingButtonText}>
+              {processing ? 'Checking…' : '■   Stop recording'}
+            </Text>
+          </Pressable>
+          <Text accessibilityLiveRegion="polite" style={styles.listeningHint}>{listeningText}</Text>
         </View>
       ) : showingWrongAnswer ? (
         <View style={styles.waitingBlock}>
@@ -678,13 +765,23 @@ function QuizScreen({
         </View>
       ) : (
         <View style={styles.answerActionBlock}>
+          {voiceMessage ? (
+            <Text accessibilityRole="alert" style={styles.voiceMessage}>{voiceMessage}</Text>
+          ) : null}
           <AppButton
-            title="Record answer"
-            onPress={onOpenAnswer}
+            title={voiceMessage ? '🎤   Try again' : '🎤   Record answer'}
+            onPress={onRecordAnswer}
             style={styles.recordButton}
-            accessibilityHint="Opens a box to type your answer"
+            accessibilityHint="Starts listening for your spoken answer"
           />
-          <Text style={styles.typedHint}>For now, type your answer</Text>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityHint="Opens a box to type your answer"
+            onPress={onTypeAnswer}
+            hitSlop={10}
+          >
+            <Text style={styles.typedHint}>Or type your answer</Text>
+          </Pressable>
         </View>
       )}
     </ScrollView>
@@ -987,7 +1084,8 @@ const styles = StyleSheet.create({
   answerFeedbackTextWrong: { color: COLORS.red, fontSize: 13, fontWeight: '700' },
   answerActionBlock: { marginTop: 'auto', paddingTop: 34 },
   recordButton: { minHeight: 56 },
-  typedHint: { marginTop: 9, color: COLORS.purple, textAlign: 'center', fontSize: 13 },
+  typedHint: { marginTop: 9, color: COLORS.purple, textAlign: 'center', fontSize: 13, textDecorationLine: 'underline' },
+  voiceMessage: { marginBottom: 10, color: COLORS.red, textAlign: 'center', fontSize: 13, lineHeight: 19 },
   recordingActionBlock: { marginTop: 44, alignItems: 'stretch' },
   waveform: { height: 32, marginBottom: 13, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
   waveformBar: { width: 5, borderRadius: 4, backgroundColor: COLORS.purple },
