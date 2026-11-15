@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { AppState, Linking } from 'react-native';
+import { AppState, Linking, Platform } from 'react-native';
 import { isSpeechAvailable, speechModule, speechUnavailableReason } from '../speech/speechRecognition';
 
 // Recording states shown on the Speak a Dream screen.
@@ -18,6 +18,13 @@ export const DictationStatus = {
 
 const STOP_TIMEOUT_MS = 4000;
 const FOREGROUND_TIMEOUT_MS = 5000;
+
+// Development diagnostics contain event names and counts, never audio or text.
+function traceSpeech(event, details = {}) {
+  if (__DEV__ && Platform.OS === 'web') {
+    console.info('[Dream speech]', event, details);
+  }
+}
 
 function joinText(...parts) {
   return parts
@@ -129,10 +136,17 @@ export function useDreamDictation() {
       const session = { subscriptions: [], segment: '', finished: false, stopTimer: null };
       sessionRef.current = session;
 
+      if (__DEV__ && Platform.OS === 'web') {
+        for (const eventName of ['start', 'audiostart', 'soundstart', 'speechstart', 'speechend', 'soundend', 'audioend', 'nomatch']) {
+          session.subscriptions.push(speechModule.addListener(eventName, () => traceSpeech(eventName)));
+        }
+      }
+
       session.subscriptions.push(
         speechModule.addListener('result', (event) => {
           if (session.finished) return;
           const text = event.results?.[0]?.transcript?.trim() || '';
+          traceSpeech('result', { isFinal: event.isFinal, characters: text.length });
           if (event.isFinal) {
             session.segment = '';
             setInterim('');
@@ -143,13 +157,18 @@ export function useDreamDictation() {
           }
         }),
         speechModule.addListener('error', (event) => {
+          traceSpeech('error', { code: event.error });
           if (session.finished || event.error === 'aborted') return;
           setError(toFriendlyError(event.error, event.message));
           finishSession(session);
         }),
-        speechModule.addListener('end', () => finishSession(session)),
+        speechModule.addListener('end', () => {
+          traceSpeech('end');
+          finishSession(session);
+        }),
       );
 
+      traceSpeech('start-requested', { language: 'en-US' });
       speechModule.start({
         lang: 'en-US',
         interimResults: true,

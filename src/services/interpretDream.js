@@ -17,7 +17,7 @@ export async function interpretDream(text) {
       },
       body: JSON.stringify({
         model: MODEL,
-        max_tokens: 160,
+        max_tokens: 1024,
         messages: [
           {
             role: 'system',
